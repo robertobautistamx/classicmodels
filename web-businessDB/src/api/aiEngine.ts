@@ -5,36 +5,50 @@ import { getPayments } from './payments';
 import { getProducts } from './products';
 import { getEmployees, getOffices } from './employees';
 
-const OLLAMA_URL = 'http://localhost:11434/api/generate';
-const OLLAMA_MODEL = 'gemma:2b'; // O 'gemma', 'gemma:1b', 'llama3'
+const OLLAMA_MODEL = 'gemma3:1b';
+
 
 async function tryQueryOllama(userPrompt: string, systemContext: string): Promise<string | null> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 sec timeout
+  const endpoints = ['http://localhost:11434/api/generate', '/ollama/api/generate'];
 
-    const response = await fetch(OLLAMA_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: OLLAMA_MODEL,
-        prompt: `System: Eres un asistente experto en analítica de base de datos classicmodels. Responde de forma clara y directa en español sin markdown complejo.\nContexto de datos: ${systemContext}\n\nPregunta Usuario: ${userPrompt}`,
-        stream: false,
-      }),
-    });
+  for (const url of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 seg timeout para inferencia local en CPU
 
-    clearTimeout(timeoutId);
+      console.log(`[Ollama] Consultando modelo ${OLLAMA_MODEL} en ${url}...`);
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.response) {
-        return data.response.trim();
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: OLLAMA_MODEL,
+          prompt: `System: Eres un asistente experto en analítica de base de datos classicmodels. Responde de forma clara y directa en español sin markdown complejo.\nContexto de datos: ${systemContext}\n\nPregunta Usuario: ${userPrompt}`,
+          stream: false,
+          options: {
+            num_predict: 120, // Respuestas concisas y rápidas
+          },
+        }),
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.response) {
+          console.log('[Ollama] Respuesta exitosa recibida del modelo:', data.response);
+          return data.response.trim();
+        }
+      } else {
+        console.warn(`[Ollama] Respuesta no exitosa de ${url}: ${response.status}`);
       }
+    } catch (err) {
+      console.warn(`[Ollama] No se pudo comunicar con ${url}:`, err);
     }
-  } catch {
-    // Ollama not running locally or timeout occurred, graceful fallback
   }
+
+  console.warn('[Ollama] No hubo respuesta de Ollama local. Usando respuesta alternativa.');
   return null;
 }
 
@@ -42,6 +56,23 @@ export async function processAiQuery(prompt: string): Promise<AiChatMessage> {
   const query = prompt.toLowerCase().trim();
   const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const id = `msg_${Date.now()}`;
+
+  // 0. Saludos / Introducción
+  const isGreeting = /^(hola|buenos\s*d[ií]as|buenas\s*tardes|buenas\s*noches|buenas|saludos|qu[eé]\s*tal|c[oó]mo\s*est[aá]s|qui[eé]n\s*eres|qu[eé]\s*puedes\s*hacer)\b/i.test(query);
+  if (isGreeting) {
+    const ollamaGreeting = await tryQueryOllama(
+      prompt,
+      'El usuario te saluda cordialmente. Responde amablemente en español diciendo que eres el asistente inteligente de classicmodels impulsado por Gemma 3 y menciona brevemente que puedes responder consultas sobre inventario, ventas, pedidos, clientes y empleados. Sé conciso y amigable.'
+    );
+
+    return {
+      id,
+      sender: 'assistant',
+      timestamp,
+      text: ollamaGreeting || '¡Hola! Soy tu asistente de IA para classicmodels (impulsado por Gemma 3). Puedo ayudarte a analizar inventario y stock, consultar métricas de ventas y pagos, ver clientes destacados o revisar el estado de pedidos. ¿En qué puedo ayudarte hoy?',
+      source: ollamaGreeting ? 'ollama' : 'fallback',
+    };
+  }
 
   // Security guardrail against destructive queries
   if (
@@ -83,6 +114,7 @@ export async function processAiQuery(prompt: string): Promise<AiChatMessage> {
       text: ollamaText || `Se han encontrado ${displayItems.length} productos registrados con sus respectivos niveles de inventario en almacén:`,
       data: displayItems,
       dataType: 'table',
+      source: ollamaText ? 'ollama' : 'fallback',
     };
   }
 
@@ -106,6 +138,7 @@ export async function processAiQuery(prompt: string): Promise<AiChatMessage> {
       data: chartData,
       dataType: 'chart',
       chartTitle: 'Histórico de Pagos y Ventas Registradas (USD)',
+      source: ollamaText ? 'ollama' : 'fallback',
     };
   }
 
@@ -133,6 +166,7 @@ export async function processAiQuery(prompt: string): Promise<AiChatMessage> {
       text: ollamaText || `Actualmente la base de datos cuenta con ${customers.length} clientes registrados. Aquí tienes un desglose de los clientes destacados y sus límites de crédito:`,
       data: topCustomers,
       dataType: 'table',
+      source: ollamaText ? 'ollama' : 'fallback',
     };
   }
 
@@ -160,6 +194,7 @@ export async function processAiQuery(prompt: string): Promise<AiChatMessage> {
       data: chartData,
       dataType: 'chart',
       chartTitle: 'Distribución de Pedidos por Estado',
+      source: ollamaText ? 'ollama' : 'fallback',
     };
   }
 
@@ -184,6 +219,7 @@ export async function processAiQuery(prompt: string): Promise<AiChatMessage> {
       text: ollamaText || `Se contabilizan ${employees.length} empleados distribuidos en ${offices.length} sedes internacionales. Resumen por sede:`,
       data: officeSummary,
       dataType: 'table',
+      source: ollamaText ? 'ollama' : 'fallback',
     };
   }
 
@@ -212,5 +248,6 @@ export async function processAiQuery(prompt: string): Promise<AiChatMessage> {
     text: ollamaText || `Analicé tu consulta "${prompt}". Aquí tienes el resumen general con el estado actual de los datos en la base de datos classicmodels:`,
     data: summary,
     dataType: 'table',
+    source: ollamaText ? 'ollama' : 'fallback',
   };
 }

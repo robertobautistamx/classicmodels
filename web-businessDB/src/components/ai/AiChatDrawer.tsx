@@ -95,6 +95,20 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
             <div key={msg.id} className={`chat-bubble ${msg.sender}`}>
               <div>{msg.text}</div>
 
+              {msg.sender === 'assistant' && msg.source && (
+                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.70rem' }}>
+                  {msg.source === 'ollama' ? (
+                    <span style={{ color: '#a5b4fc', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(99, 102, 241, 0.15)', padding: '2px 8px', borderRadius: '12px', fontWeight: 500 }}>
+                      ✨ Modelo: Gemma 3 (Ollama Local)
+                    </span>
+                  ) : (
+                    <span style={{ color: '#fbbf24', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.15)', padding: '2px 8px', borderRadius: '12px', fontWeight: 500 }}>
+                      ⚡ Respuesta offline (Ollama no conectado)
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Data Table Rendering */}
               {msg.dataType === 'table' && msg.data && msg.data.length > 0 && (
                 <div

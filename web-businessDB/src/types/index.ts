@@ -105,4 +105,5 @@ export interface AiChatMessage {
   data?: any[];
   dataType?: 'table' | 'chart' | 'summary';
   chartTitle?: string;
+  source?: 'ollama' | 'fallback';
 }
