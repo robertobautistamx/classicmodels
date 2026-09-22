@@ -9,7 +9,7 @@ import { getOrders } from '../api/orders';
 import { getPayments } from '../api/payments';
 import { getProducts } from '../api/products';
 import { getCustomers } from '../api/customers';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, CartesianGrid } from 'recharts';
 
 export const OverviewView: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -34,11 +34,12 @@ export const OverviewView: React.FC = () => {
 
   const orderStatusCounts: Record<string, number> = {};
   orders.forEach((o) => {
-    orderStatusCounts[o.status] = (orderStatusCounts[o.status] || 0) + 1;
+    const statusKey = o.status || 'Desconocido';
+    orderStatusCounts[statusKey] = (orderStatusCounts[statusKey] || 0) + 1;
   });
 
   const pieData = Object.entries(orderStatusCounts).map(([name, value]) => ({ name, value }));
-  const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#0ea5e9', '#8b5cf6'];
+  const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#0ea5e9', '#8b5cf6', '#ec4899'];
 
   const orderColumns: Column<Order>[] = [
     { header: 'Número de Pedido', accessorKey: 'orderNumber' },
@@ -80,8 +81,12 @@ export const OverviewView: React.FC = () => {
       </div>
 
       <div className="grid-charts">
+        {/* REVENUE TREND AREA CHART */}
         <div className="card">
-          <div style={{ fontWeight: 600, marginBottom: '16px', fontSize: '0.95rem' }}>Tendencia de Ingresos por Pagos</div>
+          <div style={{ fontWeight: 700, marginBottom: '16px', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>Tendencia Histórica de Ingresos</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Muestra de pagos</span>
+          </div>
           <div style={{ width: '100%', height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueTrendData}>
@@ -91,34 +96,95 @@ export const OverviewView: React.FC = () => {
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px' }} />
-                <Area type="monotone" dataKey="amount" stroke="#6366f1" fillOpacity={1} fill="url(#colorRev)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" opacity={0.5} />
+                <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={11} />
+                <YAxis stroke="var(--text-muted)" fontSize={11} tickFormatter={(val) => `$${val / 1000}k`} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderColor: 'var(--border-color)',
+                    borderRadius: '8px',
+                    color: 'var(--text-primary)',
+                    boxShadow: 'var(--shadow-md)',
+                  }}
+                  formatter={(val: any) => [`$${Number(val).toLocaleString('en-US')}`, 'Monto Pago']}
+                />
+                <Area type="monotone" dataKey="amount" stroke="#6366f1" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
+        {/* DONUT CHART (SLEEK, NO SLICE OVERLAP, CUSTOM LEGEND) */}
         <div className="card">
-          <div style={{ fontWeight: 600, marginBottom: '16px', fontSize: '0.95rem' }}>Distribución de Estados de Pedidos</div>
-          <div style={{ width: '100%', height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                  {pieData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px' }} />
-              </PieChart>
-            </ResponsiveContainer>
+          <div style={{ fontWeight: 700, marginBottom: '16px', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>Distribución de Estados de Pedidos</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{orders.length} pedidos</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', minHeight: '260px' }}>
+            <div style={{ width: '55%', height: 220 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    label={false}
+                  >
+                    {pieData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="var(--bg-card)" strokeWidth={2} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-surface)',
+                      borderColor: 'var(--border-color)',
+                      borderRadius: '8px',
+                      color: 'var(--text-primary)',
+                    }}
+                    formatter={(value: any, name: any) => [`${value} pedidos`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* CUSTOM CLEAN LEGEND */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem' }}>
+              {pieData.map((item, index) => {
+                const percent = Math.round((item.value / (orders.length || 1)) * 100);
+                return (
+                  <div key={item.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span
+                        style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          backgroundColor: COLORS[index % COLORS.length],
+                        }}
+                      />
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{item.name}</span>
+                    </div>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {item.value} ({percent}%)
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '12px' }}>Últimos Pedidos Registrados</div>
+        <div style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '14px', color: 'var(--text-primary)' }}>
+          Últimos Pedidos Registrados
+        </div>
         <DataTable data={orders} columns={orderColumns} pageSize={5} searchPlaceholder="Buscar pedidos..." />
       </div>
     </div>

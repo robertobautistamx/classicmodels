@@ -1,12 +1,19 @@
 import React from 'react';
-import { Sparkles, Database } from 'lucide-react';
+import { Sparkles, Database, Sun, Moon } from 'lucide-react';
 
 interface HeaderProps {
   title: string;
   onOpenAi: () => void;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, onOpenAi }) => {
+export const Header: React.FC<HeaderProps> = ({
+  title,
+  onOpenAi,
+  theme,
+  onToggleTheme,
+}) => {
   return (
     <header className="header">
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -14,41 +21,27 @@ export const Header: React.FC<HeaderProps> = ({ title, onOpenAi }) => {
       </div>
 
       <div className="header-actions">
+        {/* LIGHT / DARK MODE TOGGLE */}
         <button
-          onClick={onOpenAi}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            backgroundColor: 'var(--accent-light)',
-            color: '#818cf8',
-            border: '1px solid var(--border-focus)',
-            borderRadius: 'var(--radius-sm)',
-            cursor: 'pointer',
-            fontWeight: 500,
-            fontSize: '0.85rem',
-            transition: 'var(--transition)',
-          }}
+          onClick={onToggleTheme}
+          className="theme-toggle-btn"
+          title={`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`}
         >
-          <Sparkles size={16} />
-          <span>Asistente IA</span>
+          {theme === 'dark' ? <Sun size={17} style={{ color: '#fbbf24' }} /> : <Moon size={17} style={{ color: '#6366f1' }} />}
+          <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
         </button>
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.8rem',
-            color: 'var(--text-muted)',
-            padding: '6px 12px',
-            borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'var(--bg-input)',
-            border: '1px solid var(--border-color)',
-          }}
+        <button
+          onClick={onOpenAi}
+          className="header-ai-btn"
+          title="Abrir Nova Bot Asistente"
         >
-          <Database size={14} />
+          <Sparkles size={15} />
+          <span>Nova Bot 🤖</span>
+        </button>
+
+        <div className="db-badge">
+          <Database size={13} />
           <span>classicmodels</span>
         </div>
       </div>
