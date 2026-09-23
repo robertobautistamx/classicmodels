@@ -1,8 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, ShieldCheck, Sparkles, MessageSquare } from 'lucide-react';
+import { Bot, X, Send, ShieldCheck, Sparkles, MessageSquare, Download } from 'lucide-react';
 import type { AiChatMessage } from '../../types';
 import { processAiQuery } from '../../api/aiEngine';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+
+const downloadJSON = (data: any, filename: string) => {
+  const jsonStr = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
 
 interface AiChatDrawerProps {
   isOpen: boolean;
@@ -187,7 +200,27 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
                   </div>
                 )}
 
-                <div className="chat-time">{msg.timestamp}</div>
+                <div style={{ display: 'flex', justifyContent: msg.sender === 'assistant' ? 'space-between' : 'flex-end', alignItems: 'center', marginTop: '8px', gap: '8px' }}>
+                  {msg.sender === 'assistant' && (
+                    <button
+                      className="btn-chat-download"
+                      onClick={() => downloadJSON({
+                        id: msg.id,
+                        timestamp: msg.timestamp,
+                        sender: msg.sender,
+                        text: msg.text,
+                        source: msg.source || 'sistema',
+                        dataType: msg.dataType || 'texto',
+                        data: msg.data || null,
+                        chartTitle: msg.chartTitle || null,
+                      }, `nova_bot_respuesta_${msg.id}.json`)}
+                      title="Descargar esta respuesta en formato JSON"
+                    >
+                      <Download size={11} /> JSON
+                    </button>
+                  )}
+                  <div className="chat-time" style={{ marginTop: 0 }}>{msg.timestamp}</div>
+                </div>
               </div>
             </div>
           ))}
