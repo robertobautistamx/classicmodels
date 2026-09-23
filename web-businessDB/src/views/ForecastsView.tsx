@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   RefreshCw,
+  Download,
 } from 'lucide-react';
 import type { Customer, Employee, Office, Payment, Product } from '../types';
 import { getPayments } from '../api/payments';
@@ -24,6 +25,19 @@ import {
   Legend,
   Cell
 } from 'recharts';
+
+const downloadJSON = (data: any, filename: string) => {
+  const jsonStr = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
 
 export const ForecastsView: React.FC = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -158,6 +172,146 @@ export const ForecastsView: React.FC = () => {
     { line: 'Planes & Ships', actual: 150000, proyectado: Math.round(150000 * adjustedPriceMultiplier * volumeMultiplier) },
   ];
 
+  // Download JSON Handlers
+  const handleDownloadQuestion1 = () => {
+    downloadJSON(
+      {
+        pregunta_id: 1,
+        titulo: '¿Con las ventas y el flujo de caja actual, es viable abrir una nueva sucursal?',
+        subtitulo: 'Evaluación de capacidad financiera, retorno de inversión (ROI) y punto de equilibrio operacional.',
+        fecha_generacion: new Date().toISOString(),
+        parametros: {
+          capex_inversion_inicial: capex,
+          opex_gasto_mensual: opex,
+          horizonte_meses: projectionMonths,
+        },
+        kpis_calculados: {
+          viabilidad_financiera_porcentaje: viabilityScore,
+          mes_breakeven: breakevenMonth <= projectionMonths ? breakevenMonth : null,
+          mes_breakeven_etiqueta: breakevenMonth <= projectionMonths ? `Mes ${breakevenMonth}` : 'No alcanza en periodo',
+          ganancia_neta_mensual_proyectada: Math.max(0, Math.round(projectedMonthlyNetProfit)),
+          ventas_totales_historicas: totalRevenue,
+          oficinas_actuales: currentOfficeCount,
+          promedio_ventas_mensual_por_oficina: Math.round(avgRevenuePerOffice),
+        },
+        proyeccion_flujo_caja_mensual: expansionChartData,
+      },
+      'pronostico_1_viabilidad_sucursal.json'
+    );
+  };
+
+  const handleDownloadQuestion2 = () => {
+    downloadJSON(
+      {
+        pregunta_id: 2,
+        titulo: '¿Qué productos corren riesgo de agotamiento y qué capital se necesita para reabastecer?',
+        subtitulo: 'Algoritmo de prevención de desabasto y estimación de presupuesto de compra de inventario.',
+        fecha_generacion: new Date().toISOString(),
+        parametros: {
+          cobertura_deseada_dias: coverageDays,
+        },
+        kpis_calculados: {
+          total_productos_evaluados: products.length,
+          productos_en_riesgo_critico: criticalItemsList.length,
+          capital_reabastecimiento_necesario: totalReorderCapitalNeeded,
+          ganancia_neta_potencial_reabastecimiento: totalPotentialProfitFromReorder,
+        },
+        productos_en_riesgo_critico: criticalItemsList.map((p) => ({
+          codigo: p.productCode,
+          nombre: p.productName,
+          linea: p.productLine,
+          stock_actual: p.quantityInStock,
+          stock_objetivo: p.targetStock,
+          unidades_a_comprar: p.neededUnits,
+          costo_reabastecimiento: p.reorderCost,
+          ganancia_potencial: p.potentialProfit,
+        })),
+      },
+      'pronostico_2_riesgo_inventario.json'
+    );
+  };
+
+  const handleDownloadQuestion3 = () => {
+    downloadJSON(
+      {
+        pregunta_id: 3,
+        titulo: '¿Qué clientes VIP presentan riesgo de inactividad (Churn) o límites saturados?',
+        subtitulo: 'Análisis de salud de cartera comercial y protección del valor del cliente en el tiempo.',
+        fecha_generacion: new Date().toISOString(),
+        kpis_calculados: {
+          ingresos_anuales_en_riesgo_churn: revenueAtRisk,
+          total_linea_credito_otorgada: totalCreditLimitAllocated,
+          total_clientes_registrados: customers.length,
+          clientes_vip_count: vipCustomers.length,
+          clientes_alto_riesgo_count: highRiskCustomers.length,
+        },
+        clientes_vip: vipCustomers.map((c) => ({
+          numero_cliente: c.customerNumber,
+          nombre_empresa: c.customerName,
+          contacto: `${c.contactFirstName} ${c.contactLastName}`,
+          pais: c.country,
+          limite_credito: Number(c.creditLimit || 0),
+        })),
+        clientes_alto_riesgo_churn: highRiskCustomers.map((c) => ({
+          numero_cliente: c.customerNumber,
+          nombre_empresa: c.customerName,
+          limite_credito: Number(c.creditLimit || 0),
+        })),
+      },
+      'pronostico_3_riesgo_churn_vip.json'
+    );
+  };
+
+  const handleDownloadQuestion4 = () => {
+    downloadJSON(
+      {
+        pregunta_id: 4,
+        titulo: '¿La fuerza de ventas es suficiente o requiere nuevas contrataciones?',
+        subtitulo: 'Cálculo de productividad marginal por ejecutivo y proyección de aumento en facturación.',
+        fecha_generacion: new Date().toISOString(),
+        parametros: {
+          nuevas_contrataciones_solicitadas: newHires,
+        },
+        kpis_calculados: {
+          carga_actual_promedio_cuentas_por_ejecutivo: avgAccountsPerRep,
+          vendedores_actuales: totalRepCount,
+          vendedores_totales_proyectados: totalRepCount + newHires,
+          incremento_proyectado_ventas_porcentaje: incrementalRevenuePercent,
+          facturacion_bruta_actual: totalRevenue,
+          facturacion_bruta_proyectada: projectedTotalRevenueWithHires,
+          costo_estimado_salarios_anual: estimatedHireCostPerYear,
+          roi_ganancia_neta_nomina_anual: Math.round(netHiringGain),
+        },
+        comparativa_facturacion: salesHiringChartData,
+      },
+      'pronostico_4_fuerza_ventas_contrataciones.json'
+    );
+  };
+
+  const handleDownloadQuestion5 = () => {
+    downloadJSON(
+      {
+        pregunta_id: 5,
+        titulo: '¿Cómo impactará un ajuste de precios (+5% a +15%) en el margen de ganancia neta?',
+        subtitulo: 'Simulación de Elasticidad Precio de la Demanda (ε = -1.15) para maximizar la rentabilidad bruta.',
+        fecha_generacion: new Date().toISOString(),
+        parametros: {
+          ajuste_precio_porcentaje: priceAdjustmentPercent,
+          elasticidad_precio_demanda: -1.15,
+        },
+        kpis_calculados: {
+          variacion_volumen_demanda_porcentaje: Number((demandChangeFrac * 100).toFixed(2)),
+          ganancia_neta_base_actual: Math.round(currentTotalProfit),
+          ganancia_neta_proyectada: Math.round(projectedProfitWithPriceChange),
+          diferencial_utilidad_bruta: Math.round(profitDifference),
+          punto_optimo_recomendado: '+6.5% Ajuste',
+        },
+        desglose_ganancia_por_linea_producto: productLineMarginData,
+      },
+      'pronostico_5_elasticidad_precio_margenes.json'
+    );
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', gap: '16px' }}>
@@ -201,9 +355,14 @@ export const ForecastsView: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className={`viability-badge ${viabilityScore >= 70 ? 'badge-high' : 'badge-medium'}`}>
-            {viabilityScore >= 70 ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
-            <span>{viabilityScore}% Viabilidad Financiera</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div className={`viability-badge ${viabilityScore >= 70 ? 'badge-high' : 'badge-medium'}`}>
+              {viabilityScore >= 70 ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+              <span>{viabilityScore}% Viabilidad Financiera</span>
+            </div>
+            <button className="btn-download-json" onClick={handleDownloadQuestion1} title="Descargar datos del pronóstico en formato JSON">
+              <Download size={14} /> Descargar JSON
+            </button>
           </div>
         </div>
 
@@ -310,17 +469,22 @@ export const ForecastsView: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className="control-group" style={{ width: '220px' }}>
-            <label style={{ fontSize: '0.75rem' }}>Cobertura Deseada: <b>{coverageDays} días</b></label>
-            <input
-              type="range"
-              min="30"
-              max="90"
-              step="30"
-              value={coverageDays}
-              onChange={(e) => setCoverageDays(Number(e.target.value))}
-              className="forecast-slider"
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div className="control-group" style={{ width: '200px' }}>
+              <label style={{ fontSize: '0.75rem' }}>Cobertura Deseada: <b>{coverageDays} días</b></label>
+              <input
+                type="range"
+                min="30"
+                max="90"
+                step="30"
+                value={coverageDays}
+                onChange={(e) => setCoverageDays(Number(e.target.value))}
+                className="forecast-slider"
+              />
+            </div>
+            <button className="btn-download-json" onClick={handleDownloadQuestion2} title="Descargar datos del pronóstico en formato JSON">
+              <Download size={14} /> Descargar JSON
+            </button>
           </div>
         </div>
 
@@ -402,6 +566,9 @@ export const ForecastsView: React.FC = () => {
               </p>
             </div>
           </div>
+          <button className="btn-download-json" onClick={handleDownloadQuestion3} title="Descargar datos del pronóstico en formato JSON">
+            <Download size={14} /> Descargar JSON
+          </button>
         </div>
 
         <div className="grid-kpis" style={{ marginBottom: '20px' }}>
@@ -462,17 +629,22 @@ export const ForecastsView: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className="control-group" style={{ width: '220px' }}>
-            <label style={{ fontSize: '0.75rem' }}>Nuevas Contrataciones: <b>+{newHires} Ejecutivos</b></label>
-            <input
-              type="range"
-              min="1"
-              max="4"
-              step="1"
-              value={newHires}
-              onChange={(e) => setNewHires(Number(e.target.value))}
-              className="forecast-slider"
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div className="control-group" style={{ width: '200px' }}>
+              <label style={{ fontSize: '0.75rem' }}>Nuevas Contrataciones: <b>+{newHires} Ejecutivos</b></label>
+              <input
+                type="range"
+                min="1"
+                max="4"
+                step="1"
+                value={newHires}
+                onChange={(e) => setNewHires(Number(e.target.value))}
+                className="forecast-slider"
+              />
+            </div>
+            <button className="btn-download-json" onClick={handleDownloadQuestion4} title="Descargar datos del pronóstico en formato JSON">
+              <Download size={14} /> Descargar JSON
+            </button>
           </div>
         </div>
 
@@ -533,17 +705,22 @@ export const ForecastsView: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className="control-group" style={{ width: '240px' }}>
-            <label style={{ fontSize: '0.75rem' }}>Ajuste de Precio: <b>{priceAdjustmentPercent > 0 ? `+${priceAdjustmentPercent}%` : `${priceAdjustmentPercent}%`}</b></label>
-            <input
-              type="range"
-              min="-10"
-              max="20"
-              step="0.5"
-              value={priceAdjustmentPercent}
-              onChange={(e) => setPriceAdjustmentPercent(Number(e.target.value))}
-              className="forecast-slider"
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div className="control-group" style={{ width: '200px' }}>
+              <label style={{ fontSize: '0.75rem' }}>Ajuste de Precio: <b>{priceAdjustmentPercent > 0 ? `+${priceAdjustmentPercent}%` : `${priceAdjustmentPercent}%`}</b></label>
+              <input
+                type="range"
+                min="-10"
+                max="20"
+                step="0.5"
+                value={priceAdjustmentPercent}
+                onChange={(e) => setPriceAdjustmentPercent(Number(e.target.value))}
+                className="forecast-slider"
+              />
+            </div>
+            <button className="btn-download-json" onClick={handleDownloadQuestion5} title="Descargar datos del pronóstico en formato JSON">
+              <Download size={14} /> Descargar JSON
+            </button>
           </div>
         </div>
 
