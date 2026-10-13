@@ -1028,3 +1028,251 @@ body {
 .btn-send:hover {
   background-color: var(--accent-hover);
 }
+
+/* ITERATION CONTROLLER BAR */
+.iterations-controller-bar {
+  padding: 8px 18px;
+  background-color: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.iterations-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.iterations-hint {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.iterations-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iterations-stepper {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 2px 4px;
+  gap: 4px;
+}
+
+.btn-stepper {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  transition: var(--transition);
+}
+
+.btn-stepper:hover:not(:disabled) {
+  background-color: var(--accent-light);
+  color: var(--text-primary);
+}
+
+.btn-stepper:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.stepper-value {
+  font-size: 0.78rem;
+  font-weight: 700;
+  min-width: 16px;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.iterations-quick-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-pill-iter {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-pill-iter:hover:not(:disabled) {
+  border-color: var(--border-focus);
+  color: var(--text-primary);
+}
+
+.btn-pill-iter.active {
+  background: var(--accent-gradient);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+/* USER ITERATION BADGE */
+.user-iteration-badge {
+  font-size: 0.68rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+/* ITERATION TABS IN ASSISTANT BUBBLE */
+.iteration-tabs-bar {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.iteration-tabs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 6px;
+}
+
+.iteration-tabs-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.iteration-active-indicator {
+  font-size: 0.66rem;
+  color: #818cf8;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.12);
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.iteration-tabs-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.iteration-tabs-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.iteration-tabs-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.iteration-tab-pill {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 0.73rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.iteration-tab-pill:hover {
+  border-color: var(--border-focus);
+  color: var(--text-primary);
+}
+
+.iteration-tab-pill.active {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: #818cf8;
+  color: #818cf8;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.25);
+}
+
+.tab-pill-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.iteration-tab-pill.active .tab-pill-badge {
+  background: #6366f1;
+  color: #ffffff;
+}
+
+.tab-pill-text {
+  white-space: nowrap;
+}
+
+.chat-bubble-content {
+  line-height: 1.5;
+}
+
+/* PULSE DOT ANIMATION */
+.ai-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #818cf8;
+  display: inline-block;
+  animation: pulseDot 1.4s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
