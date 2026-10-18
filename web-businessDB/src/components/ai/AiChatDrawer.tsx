@@ -3,6 +3,7 @@ import { Bot, X, Send, ShieldCheck, Sparkles, MessageSquare, Download, Layers, P
 import type { AiChatMessage } from '../../types';
 import { processAiQuery } from '../../api/aiEngine';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { AiLogsModal } from './AiLogsModal';
 
 const downloadJSON = (data: any, filename: string) => {
   const jsonStr = JSON.stringify(data, null, 2);
@@ -35,6 +36,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
   const [loading, setLoading] = useState(false);
   const [iterationsCount, setIterationsCount] = useState<number>(1);
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
   const suggestions = [
@@ -111,9 +113,19 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
               </div>
             </div>
           </div>
-          <button className="btn-close" onClick={onClose} title="Cerrar chat">
-            <X size={18} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              className="btn-logs-trigger"
+              onClick={() => setIsLogsOpen(true)}
+              title="Ver logs de ejecución, telemetría e iteraciones de la IA"
+            >
+              🫙 Logs & Benchmark
+            </button>
+            <button className="btn-close" onClick={onClose} title="Cerrar chat">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="ai-chat-body">
@@ -277,7 +289,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
                               id: msg.id,
                               timestamp: msg.timestamp,
                               sender: msg.sender,
-                              activeIteration: active.title || `Iteración ${activeIdx + 1}`,
+                              activeIteration: ('title' in active ? (active as any).title : undefined) || `Iteración ${activeIdx + 1}`,
                               activeIterationIndex: activeIdx + 1,
                               totalIterations: msg.iterations?.length || 1,
                               text: textToDisplay,
@@ -400,6 +412,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
           </button>
         </div>
       </div>
+      <AiLogsModal isOpen={isLogsOpen} onClose={() => setIsLogsOpen(false)} />
     </>
   );
 };

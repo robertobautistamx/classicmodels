@@ -4,19 +4,40 @@ import { getOrders } from './orders';
 import { getPayments } from './payments';
 import { getProducts } from './products';
 import { getEmployees, getOffices } from './employees';
+import { aiLogger } from '../services/aiLogger';
 
 const OLLAMA_MODEL = 'gemma3:1b';
 
 async function tryQueryOllama(
   userPrompt: string,
   systemContext: string,
-  iterationPerspective?: { iterationNumber: number; title: string; focus: string }
+  iterationPerspective?: { iterationNumber: number; title: string; focus: string },
+  fallbackPreview?: string
 ): Promise<string | null> {
   const endpoints = ['http://localhost:11434/api/generate', '/ollama/api/generate'];
 
   const perspectiveInstruction = iterationPerspective
     ? `\nEnfoque específico para esta Iteración #${iterationPerspective.iterationNumber} (${iterationPerspective.title}): ${iterationPerspective.focus}`
     : '';
+
+  const fullPrompt = `System: Eres un asistente experto en analítica de base de datos classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.\nContexto de datos: ${systemContext}${perspectiveInstruction}\n\nPregunta Usuario: ${userPrompt}`;
+
+  const iterNumber = iterationPerspective?.iterationNumber || 1;
+  const iterTitle = iterationPerspective?.title || 'General';
+  const iterFocus = iterationPerspective?.focus || 'Análisis';
+  const startTime = performance.now();
+
+  aiLogger.addStep(
+    `Inferencia Iteración #${iterNumber}: ${iterTitle}`,
+    'info',
+    {
+      modelo: OLLAMA_MODEL,
+      enfoque: iterFocus,
+      temperatura: iterationPerspective ? 0.3 + iterationPerspective.iterationNumber * 0.12 : 0.4,
+      contextoLongitud: systemContext.length,
+      endpointsEvaluados: endpoints,
+    }
+  );
 
   for (const url of endpoints) {
     try {
@@ -29,7 +50,7 @@ async function tryQueryOllama(
         signal: controller.signal,
         body: JSON.stringify({
           model: OLLAMA_MODEL,
-          prompt: `System: Eres un asistente experto en analítica de base de datos classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.\nContexto de datos: ${systemContext}${perspectiveInstruction}\n\nPregunta Usuario: ${userPrompt}`,
+          prompt: fullPrompt,
           stream: false,
           options: {
             num_predict: 140,
@@ -43,6 +64,49 @@ async function tryQueryOllama(
       if (response.ok) {
         const data = await response.json();
         if (data.response) {
+          const latencyMs = Math.round(performance.now() - startTime);
+          const totalDurationMs = data.total_duration ? Math.round(data.total_duration / 1e6) : latencyMs;
+          const loadDurationMs = data.load_duration ? Math.round(data.load_duration / 1e6) : 0;
+          const promptEvalCount = data.prompt_eval_count || 0;
+          const promptEvalDurationMs = data.prompt_eval_duration ? Math.round(data.prompt_eval_duration / 1e6) : 0;
+          const evalCount = data.eval_count || 0;
+          const evalDurationMs = data.eval_duration ? Math.round(data.eval_duration / 1e6) : 0;
+          const tokensPerSecond = evalDurationMs > 0 ? Number(((evalCount / (evalDurationMs / 1000))).toFixed(1)) : 0;
+
+          aiLogger.recordIterationTelemetry({
+            iterationNumber: iterNumber,
+            title: iterTitle,
+            focus: iterFocus,
+            source: 'ollama',
+            latencyMs,
+            promptSent: fullPrompt,
+            responsePreview: data.response.trim(),
+            telemetry: {
+              model: OLLAMA_MODEL,
+              latencyMs,
+              endpointUsed: url,
+              totalDurationMs,
+              loadDurationMs,
+              promptEvalCount,
+              promptEvalDurationMs,
+              evalCount,
+              evalDurationMs,
+              tokensPerSecond,
+            },
+          });
+
+          aiLogger.addStep(
+            `Respuesta Recibida de Ollama (#${iterNumber})`,
+            'success',
+            {
+              endpoint: url,
+              latenciaMs: latencyMs,
+              tokensPrompt: promptEvalCount,
+              tokensGenerados: evalCount,
+              velocidadTps: tokensPerSecond,
+            }
+          );
+
           return data.response.trim();
         }
       }
@@ -51,14 +115,48 @@ async function tryQueryOllama(
     }
   }
 
+  // Fallback si Ollama no está disponible o timeout
+  const latencyMs = Math.round(performance.now() - startTime);
+  aiLogger.recordIterationTelemetry({
+    iterationNumber: iterNumber,
+    title: iterTitle,
+    focus: iterFocus,
+    source: 'fallback',
+    latencyMs,
+    promptSent: fullPrompt,
+    responsePreview: fallbackPreview || 'Respuesta generada por Motor Analítico BD Nova',
+  });
+
+  aiLogger.addStep(
+    `Fallback Activado (#${iterNumber}): Motor BD Nova`,
+    'warning',
+    {
+      motivo: 'Ollama local no disponible en endpoints. Se activó síntesis nativa de classicmodels.',
+      latenciaMs: latencyMs,
+    }
+  );
+
   return null;
 }
 
 export async function processAiQuery(prompt: string, requestedIterations: number = 1): Promise<AiChatMessage> {
+  const totalIterations = Math.max(1, Math.min(5, Math.floor(requestedIterations) || 1));
+  aiLogger.startAttempt(prompt, totalIterations);
+
+  try {
+    const result = await internalProcessAiQuery(prompt, totalIterations);
+    aiLogger.finishAttempt('completed', `Generada respuesta con ${result.iterations?.length || 1} iteraciones`);
+    return result;
+  } catch (err: any) {
+    aiLogger.finishAttempt('error', err?.message || 'Error en procesamiento');
+    throw err;
+  }
+}
+
+async function internalProcessAiQuery(prompt: string, totalIterations: number): Promise<AiChatMessage> {
   const query = prompt.toLowerCase().trim();
   const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const id = `msg_${Date.now()}`;
-  const totalIterations = Math.max(1, Math.min(5, Math.floor(requestedIterations) || 1));
 
   // Security guardrail against destructive queries
   if (
@@ -180,7 +278,7 @@ export async function processAiQuery(prompt: string, requestedIterations: number
     // Data for iteration 4: Restocking action plan
     const restockTable = lowStock.slice(0, 6).map((p) => ({
       Producto: p.productName,
-      'Stock Actual': p.stock || p.quantityInStock,
+      'Stock Actual': Number(p.quantityInStock),
       'Faltante a 1000 u': Math.max(0, 1000 - Number(p.quantityInStock)),
       Proveedor: p.productVendor,
     }));
