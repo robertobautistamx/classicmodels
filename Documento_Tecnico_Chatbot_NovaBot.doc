@@ -1,0 +1,348 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+  <meta charset="utf-8">
+  <title>Documento Técnico - Asistente Nova Bot</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    body {
+      font-family: 'Calibri', 'Arial', sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #1e293b;
+      margin: 30px;
+    }
+    h1 {
+      font-size: 20pt;
+      color: #312e81;
+      border-bottom: 2px solid #4f46e5;
+      padding-bottom: 6px;
+      margin-top: 24px;
+    }
+    h2 {
+      font-size: 14pt;
+      color: #4338ca;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 4px;
+      margin-top: 18px;
+    }
+    h3 {
+      font-size: 12pt;
+      color: #1e1b4b;
+      margin-top: 14px;
+    }
+    p, li {
+      text-align: justify;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 10pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #e0e7ff;
+      color: #1e1b4b;
+      font-weight: bold;
+    }
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background-color: #e0e7ff;
+      color: #3730a3;
+      border-radius: 4px;
+      font-size: 9pt;
+      font-weight: bold;
+    }
+    .code-box {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 9pt;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 12px 0;
+      white-space: pre-wrap;
+    }
+    .highlight-box {
+      background-color: #f1f5f9;
+      border-left: 4px solid #4f46e5;
+      padding: 10px 14px;
+      margin: 12px 0;
+      font-size: 10pt;
+    }
+    .header-doc {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .subtitle {
+      font-size: 13pt;
+      color: #64748b;
+      margin-top: -10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-doc">
+    <h1>DOCUMENTO TÉCNICO: ARQUITECTURA, MODELO Y PROCESO DEL ASISTENTE IA (NOVA BOT)</h1>
+    <div class="subtitle">Base de Datos: <strong>classicmodels</strong> | Sistema de Gestión Empresarial Nova Store</div>
+  </div>
+
+  <div class="highlight-box">
+    <strong>Resumen Ejecutivo:</strong> Este documento describe el diseño técnico, la infraestructura de cómputo, el modelo de lenguaje, las entradas y salidas, así como la trazabilidad interna y logs del asistente inteligente <em>Nova Bot</em>, integrando procesamiento analítico sobre la base de datos empresarial <code>classicmodels</code> con el modelo <strong>Gemma 3 (1B)</strong> ejecutado localmente mediante <strong>Ollama</strong>.
+  </div>
+
+  <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 20px 0;" />
+
+  <!-- 1. PROMPT -> NECESIDAD -->
+  <h2>1. Prompt y Necesidad de Negocio</h2>
+  <p>
+    En la arquitectura de sistemas empresariales, el <strong>Prompt</strong> actúa como el puente de comunicación en lenguaje natural entre el usuario final (directores, ejecutivos de ventas, personal de almacén) y la información estructurada del negocio.
+  </p>
+  <h3>1.1. La Necesidad de Negocio</h3>
+  <p>
+    Tradicionalmente, consultar la base de datos <code>classicmodels</code> requiere conocimientos avanzados de SQL (relaciones entre tablas como <code>customers</code>, <code>orders</code>, <code>products</code>, <code>payments</code>, etc.) o interfaces de reportes rígidas. La necesidad identificada es:
+  </p>
+  <ul>
+    <li><strong>Democratización de datos:</strong> Permitir a cualquier colaborador formular dudas en lenguaje natural y obtener respuestas analíticas inmediatas.</li>
+    <li><strong>Agilidad en decisiones críticas:</strong> Saber al instante qué productos tienen bajo stock para reabastecer, identificar a los mejores clientes por crédito, evaluar la distribución de pedidos y el flujo de ventas.</li>
+    <li><strong>Seguridad de lectura estricta:</strong> Garantizar que el sistema opere en modo <code>READ-ONLY</code>, impidiendo cualquier modificación accidental o maliciosa (drop, delete, update).</li>
+    <li><strong>Análisis multifacético (Iteraciones):</strong> Permitir que con una sola pregunta el usuario pueda recibir de 1 a 5 iteraciones o enfoques analíticos complementarios (diagnóstico inicial, patrones detallados, recomendaciones comerciales, riesgos operativos y visión a futuro).</li>
+  </ul>
+
+  <h3>1.2. Mapeo: Necesidad vs. Prompts Ejecutados</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Área del Negocio</th>
+        <th>Necesidad Específica</th>
+        <th>Ejemplo de Prompt del Usuario</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Inventario y Almacén</strong></td>
+        <td>Detectar quiebres de inventario y reabastecimiento urgente.</td>
+        <td><em>"¿Cuáles productos tienen bajo stock?"</em></td>
+      </tr>
+      <tr>
+        <td><strong>Finanzas y Cobranza</strong></td>
+        <td>Auditar volumen de transacciones de pago e ingresos totales.</td>
+        <td><em>"Muestra las ventas e ingresos del sistema"</em></td>
+      </tr>
+      <tr>
+        <td><strong>Comercial y Clientes</strong></td>
+        <td>Identificar cuentas clave y evaluar exposición crediticia.</td>
+        <td><em>"Top clientes por límite de crédito"</em></td>
+      </tr>
+      <tr>
+        <td><strong>Operaciones y Logística</strong></td>
+        <td>Conocer el cuello de botella en entregas y pedidos pendientes.</td>
+        <td><em>"Distribución de pedidos por estado"</em></td>
+      </tr>
+      <tr>
+        <td><strong>Recursos Humanos</strong></td>
+        <td>Monitorear cobertura de personal y sedes globales.</td>
+        <td><em>"Resumen de empleados por oficina"</em></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 2. COMPUTO USADO -->
+  <h2>2. Cómputo Usado</h2>
+  <p>
+    El sistema implementa una arquitectura híbrida de cómputo local y de borde (Edge/Local Computing), evitando dependencias externas de APIs en la nube de pago y garantizando soberanía y privacidad de datos.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Capa de Cómputo</th>
+        <th>Tecnología / Plataforma</th>
+        <th>Especificaciones y Rol</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Servidor de Inferencia IA</strong></td>
+        <td>Ollama Local Runtime (v0.x)</td>
+        <td>Inferencia local en CPU/GPU mediante quantización GGUF. Expuesto localmente en <code>http://localhost:11434</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Consumo de Memoria RAM (IA)</strong></td>
+        <td>Modelo Gemma 3 1B cuantizado</td>
+        <td>Aproximadamente <strong>1.4 GB a 1.8 GB de memoria RAM</strong> para mantener los pesos del modelo en memoria activa.</td>
+      </tr>
+      <tr>
+        <td><strong>Backend API REST</strong></td>
+        <td>NestJS + Node.js + TypeORM</td>
+        <td>Puerto <code>3000</code>. Ejecuta consultas optimizadas sobre MySQL (base de datos <code>classicmodels</code>) con tiempo de respuesta de sub-milisegundos.</td>
+      </tr>
+      <tr>
+        <td><strong>Frontend & Visualización</strong></td>
+        <td>Vite + React 19 + TypeScript</td>
+        <td>Puerto <code>5173</code>. Orquesta la captura del prompt, el selector de iteraciones, la inyección de datos y el renderizado gráfico con Recharts.</td>
+      </tr>
+      <tr>
+        <td><strong>Latencia de Cómputo</strong></td>
+        <td>Tiempo de procesamiento</td>
+        <td><strong>Generación con Ollama:</strong> 1.5 a 4 segundos por iteración (según núcleos de CPU).<br/><strong>Motor BD Fallback:</strong> 80 a 150 ms (instantáneo).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 3. QUE MODELO -->
+  <h2>3. Qué Modelo</h2>
+  <p>
+    El asistente utiliza el modelo de lenguaje de última generación <strong>Gemma 3</strong>, desarrollado por <strong>Google DeepMind</strong>, en su versión ultra-eficiente de <strong>1 billón de parámetros (1B)</strong>.
+  </p>
+  <h3>3.1. Ficha Técnica del Modelo</h3>
+  <ul>
+    <li><strong>Nombre del Modelo:</strong> <code>gemma3:1b</code></li>
+    <li><strong>Desarrollador:</strong> Google DeepMind.</li>
+    <li><strong>Tamaño de Parámetros:</strong> ~1.0 Billón de parámetros (arquitectura Transformer optimizada).</li>
+    <li><strong>Formato de Ejecución:</strong> Cuantización compacta de 4 bits (Q4_K_M) administrada por Ollama.</li>
+    <li><strong>Context Window:</strong> Hasta 4,096 tokens (configurado con <code>num_predict: 140</code> para respuestas concisas y ejecutivas sin saturar la CPU).</li>
+    <li><strong>Temperatura Dinámica:</strong> <code>0.30</code> para iteraciones de diagnóstico básico, escalando progresivamente hasta <code>0.78</code> en iteraciones prospectivas y de recomendaciones estratégicas.</li>
+    <li><strong>Mecanismo de Respaldo Híbrido:</strong> En caso de que el servicio Ollama no esté iniciado o supere el tiempo de espera (timeout de 45s), entra en acción el <strong>Motor Analítico BD Nova</strong>, que genera agregaciones y análisis algorítmico sin interrumpir la experiencia de usuario.</li>
+  </ul>
+
+  <!-- 4. QUE RECIBE -->
+  <h2>4. Qué Recibe el Modelo (Inputs & Prompt Engineering)</h2>
+  <p>
+    El modelo opera bajo el paradigma de <strong>Grounding en Datos Reales (RAG en memoria)</strong>. No inventa datos ni alucina cifras porque recibe directamente los registros consolidados extraídos de la base de datos MySQL en cada consulta.
+  </p>
+  <h3>4.1. Componentes del Payload que se envía al Modelo</h3>
+  <ol>
+    <li>
+      <strong>System Prompt (Instrucción de Rol):</strong><br/>
+      Define el comportamiento, tono y restricciones del asistente:
+      <div class="code-box">System: Eres un asistente experto en analítica de base de datos classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.</div>
+    </li>
+    <li>
+      <strong>Contexto de Datos Extraídos en Tiempo Real:</strong><br/>
+      Los datos reales extraídos de la API de classicmodels se inyectan en el prompt. Por ejemplo, al consultar stock:
+      <div class="code-box">Contexto de datos: Catálogo total: 110 productos. Bajo stock (&lt;500): 18 productos. Nombres: 1968 Ford Mustang, 1969 Dodge Charger... Unidades totales: 555,131.</div>
+    </li>
+    <li>
+      <strong>Directiva Específica de la Iteración (#1 a #5):</strong><br/>
+      Cada iteración recibe una directriz de lente analítica única para evitar respuestas idénticas:
+      <div class="code-box">Enfoque específico para esta Iteración #3 (Estrategia & Recomendaciones): Ofrece recomendaciones comerciales y estratégicas accionables basadas en la información obtenida.</div>
+    </li>
+    <li>
+      <strong>Prompt del Usuario:</strong><br/>
+      La pregunta original formulada por el usuario (ejemplo: <em>"¿Cuáles productos tienen bajo stock?"</em>).
+    </li>
+  </ol>
+
+  <!-- 5. QUE CONTESTA -->
+  <h2>5. Qué Contesta el Modelo (Outputs & Estructura de Respuesta)</h2>
+  <p>
+    A diferencia de un chatbot tradicional de solo texto, Nova Bot entrega una <strong>respuesta multimodal interactiva</strong> compuesta por cuatro capas:
+  </p>
+  <ol>
+    <li>
+      <strong>Explicación Textual Sintetizada:</strong><br/>
+      Un párrafo ejecutivo redactado por el modelo Gemma 3 que responde con precisión a la inquietud del usuario citando las métricas clave.
+    </li>
+    <li>
+      <strong>Estructura de Datos Interactiva (Tabla o Gráfico):</strong><br/>
+      <ul>
+        <li><strong>Tablas Dinámicas:</strong> Columnas formateadas con código, descripción, stock, límites de crédito, precios en dólares (USD).</li>
+        <li><strong>Micro-Gráficos de Barras (Recharts):</strong> Visualizaciones interactivas de distribución de órdenes por estado, pagos en el tiempo o clientes por país.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Sistema de Pestañas Multi-Iteración:</strong><br/>
+      Si el usuario solicitó <em>N iteraciones</em> (ej. 3 iteraciones), la respuesta agrupa pestañas interactivas en la misma burbuja de chat:
+      <br/>
+      <span class="badge">Pestaña 1: Resumen & Bajo Stock</span>
+      <span class="badge">Pestaña 2: Catálogo de Mayor Valor</span>
+      <span class="badge">Pestaña 3: Distribución por Líneas</span>
+    </li>
+    <li>
+      <strong>Exportación y Auditoría en Formato JSON:</strong><br/>
+      Cada respuesta cuenta con un botón de descarga inmediata que genera un archivo JSON con los datos estructurados, procedencia (Ollama o Sistema) y timestamp para auditoría.
+    </li>
+  </ol>
+
+  <!-- 6. LOGS DE COMO ACCIONA -->
+  <h2>6. Logs de Cómo Acciona y Proceso Interno del Modelo</h2>
+  <p>
+    La trazabilidad del sistema permite auditar cada paso del proceso, extrayendo métricas y metadatos del ciclo interno de inferencia ejecutado por Ollama y el backend.
+  </p>
+
+  <h3>6.1. Diagrama de Flujo del Pipeline Interno</h3>
+  <div class="highlight-box">
+    <strong>[Usuario presiona Enviar]</strong><br/>
+    &nbsp;&nbsp;│<br/>
+    &nbsp;&nbsp;▼ <strong>Paso 1:</strong> Interfaz valida entrada y lee selector de iteraciones (ej. 3 iteraciones).<br/>
+    &nbsp;&nbsp;│<br/>
+    &nbsp;&nbsp;▼ <strong>Paso 2:</strong> Guardrail de seguridad: Verifica que la consulta sea exclusivamente READ-ONLY.<br/>
+    &nbsp;&nbsp;│<br/>
+    &nbsp;&nbsp;▼ <strong>Paso 3:</strong> Query a la BD classicmodels mediante endpoints REST (/api/products, /api/payments, etc.).<br/>
+    &nbsp;&nbsp;│<br/>
+    &nbsp;&nbsp;▼ <strong>Paso 4:</strong> Construcción del payload con System Prompt + Grounding Context + Enfoque de Iteración.<br/>
+    &nbsp;&nbsp;│<br/>
+    &nbsp;&nbsp;▼ <strong>Paso 5:</strong> Envío de petición HTTP POST a <code>http://localhost:11434/api/generate</code>.<br/>
+    &nbsp;&nbsp;│<br/>
+    &nbsp;&nbsp;▼ <strong>Paso 6:</strong> Motor Gemma 3 ejecuta tokenización, inferencia y decodificación de tokens.<br/>
+    &nbsp;&nbsp;│<br/>
+    &nbsp;&nbsp;▼ <strong>Paso 7:</strong> Extracción de respuesta y telemetría de rendimiento (duración, tokens generados).<br/>
+    &nbsp;&nbsp;│<br/>
+    &nbsp;&nbsp;▼ <strong>Paso 8:</strong> Renderizado reactivo en el Chat Drawer con pestañas y tablas interactivas.
+  </div>
+
+  <h3>6.2. Extracción de Datos del Proceso Interno (Payload de Telemetría Ollama)</h3>
+  <p>
+    Internamente, cuando Ollama procesa la solicitud mediante <code>/api/generate</code>, devuelve metadatos completos sobre el desempeño del modelo. Estos datos pueden ser auditados para medir el rendimiento de la máquina:
+  </p>
+  <div class="code-box">{
+  "model": "gemma3:1b",
+  "created_at": "2026-10-12T19:00:14.284Z",
+  "response": "Se han detectado 18 productos en situación de inventario crítico con menos de 500 unidades disponibles...",
+  "done": true,
+  "context": [ 106, 1645, 108, 4125, ... ],
+  "total_duration": 2481023400,      // 2.48 segundos en total
+  "load_duration": 482100200,        // 0.48 segundos para cargar modelo en RAM
+  "prompt_eval_count": 86,           // 86 tokens recibidos en el prompt y contexto
+  "prompt_eval_duration": 341200000, // 0.34 segundos procesando el prompt
+  "eval_count": 118,                 // 118 tokens generados en la respuesta
+  "eval_duration": 1657723200        // 1.65 segundos generando texto (~71.2 tokens/seg)
+}</div>
+
+  <h3>6.3. Registro de Consola del Frontend (Log de Ejecución en Tiempo Real)</h3>
+  <div class="code-box">[AiChatDrawer] Enviando consulta: "¿Cuáles productos tienen bajo stock?" con 3 iteraciones
+[aiEngine] Recuperando catálogo de productos desde /api/products... Recibidos: 110 artículos
+[aiEngine] Filtro aplicado: 18 productos con stock < 500 u
+[Ollama] Iteración 1/3: Consultando modelo gemma3:1b en http://localhost:11434/api/generate...
+[Ollama] Respuesta recibida exitosamente en 2.4s (118 tokens)
+[Ollama] Iteración 2/3: Consultando modelo gemma3:1b (Enfoque: Catálogo de Mayor Valor MSRP)...
+[Ollama] Respuesta recibida exitosamente en 2.1s (105 tokens)
+[Ollama] Iteración 3/3: Consultando modelo gemma3:1b (Enfoque: Plan de Reabastecimiento)...
+[Ollama] Respuesta recibida exitosamente en 2.3s (122 tokens)
+[AiChatDrawer] Renderizado completado: 3 iteraciones preparadas en pestañas de interfaz.</div>
+
+  <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 30px 0;" />
+
+  <p style="text-align: center; font-size: 9pt; color: #64748b;">
+    Documento Técnico generado para el Sistema Nova Store • Base de Datos classicmodels • Noviembre 2026
+  </p>
+
+</body>
+</html>

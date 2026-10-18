@@ -97,6 +97,16 @@ export interface Product {
   orderDetails?: OrderDetail[];
 }
 
+export interface AiChatMessageIteration {
+  iterationNumber: number;
+  title: string;
+  text: string;
+  data?: any[];
+  dataType?: 'table' | 'chart' | 'summary';
+  chartTitle?: string;
+  source?: 'ollama' | 'fallback';
+}
+
 export interface AiChatMessage {
   id: string;
   sender: 'user' | 'assistant';
@@ -106,4 +116,7 @@ export interface AiChatMessage {
   dataType?: 'table' | 'chart' | 'summary';
   chartTitle?: string;
   source?: 'ollama' | 'fallback';
+  iterationsCount?: number;
+  iterations?: AiChatMessageIteration[];
 }
+
