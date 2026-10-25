@@ -118,5 +118,8 @@ export interface AiChatMessage {
   source?: 'ollama' | 'fallback';
   iterationsCount?: number;
   iterations?: AiChatMessageIteration[];
+  fewShotApplied?: boolean;
+  analogNeedId?: string;
+  similarityScore?: number;
 }
 

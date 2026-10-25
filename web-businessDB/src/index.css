@@ -1964,3 +1964,302 @@ body {
 .benchmark-table tr:hover td {
   background: var(--bg-card-hover);
 }
+
+/* ==========================================================================
+   FEW-SHOT (N*) IN-CONTEXT LEARNING STYLES
+   ========================================================================== */
+
+.btn-few-shot-toggle {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-few-shot-toggle.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(99, 102, 241, 0.25));
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.fewshot-blackboard-card {
+  background: linear-gradient(145deg, #09131f, #0d1b2a);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.fewshot-blackboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.fewshot-blackboard-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  flex-wrap: wrap;
+}
+
+.fewshot-chalk-tag {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  font-family: monospace;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.fewshot-blackboard-subtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 6px;
+  max-width: 680px;
+  line-height: 1.45;
+}
+
+.fewshot-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.fewshot-chip-item {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fewshot-chip-item:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+}
+
+.fewshot-chip-item.selected {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: #818cf8;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+}
+
+.chip-code-pair {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.chip-code-pair .code-base {
+  color: #e2e8f0;
+}
+
+.chip-code-pair .code-analog {
+  color: #38bdf8;
+}
+
+.chip-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.chip-subtext {
+  font-size: 0.70rem;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fewshot-results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fewshot-table-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.score-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.76rem;
+  font-family: monospace;
+}
+
+.score-badge.zero {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.score-badge.few {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.diff-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.76rem;
+  font-family: monospace;
+}
+
+.diff-badge.positive {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.diff-badge.negative {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.btn-inspect-subtle {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-inspect-subtle:hover {
+  background: rgba(99, 102, 241, 0.3);
+  color: #ffffff;
+}
+
+.fewshot-detail-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 16px;
+}
+
+.detail-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #818cf8;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.detail-score-pill {
+  font-size: 0.8rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: var(--text-secondary);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.detail-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.detail-box.sample-answer {
+  border-left: 3px solid #38bdf8;
+  background: rgba(56, 189, 248, 0.05);
+  color: #bae6fd;
+  font-style: italic;
+}
+
+.detail-box.comparison-text {
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.detail-box.comparison-text.zero {
+  border-left: 3px solid #94a3b8;
+  color: #cbd5e1;
+}
+
+.detail-box.comparison-text.few {
+  border-left: 3px solid #34d399;
+  background: rgba(16, 185, 129, 0.05);
+  color: #d1fae5;
+}

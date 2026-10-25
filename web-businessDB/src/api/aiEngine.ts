@@ -5,6 +5,7 @@ import { getPayments } from './payments';
 import { getProducts } from './products';
 import { getEmployees, getOffices } from './employees';
 import { aiLogger } from '../services/aiLogger';
+import { getFewShotPairForQuery, formatFewShotPromptContext } from '../services/fewShotKnowledge';
 
 const OLLAMA_MODEL = 'gemma3:1b';
 
@@ -12,7 +13,8 @@ async function tryQueryOllama(
   userPrompt: string,
   systemContext: string,
   iterationPerspective?: { iterationNumber: number; title: string; focus: string },
-  fallbackPreview?: string
+  fallbackPreview?: string,
+  fewShotContext?: string
 ): Promise<string | null> {
   const endpoints = ['http://localhost:11434/api/generate', '/ollama/api/generate'];
 
@@ -20,7 +22,9 @@ async function tryQueryOllama(
     ? `\nEnfoque específico para esta Iteración #${iterationPerspective.iterationNumber} (${iterationPerspective.title}): ${iterationPerspective.focus}`
     : '';
 
-  const fullPrompt = `System: Eres un asistente experto en analítica de base de datos classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.\nContexto de datos: ${systemContext}${perspectiveInstruction}\n\nPregunta Usuario: ${userPrompt}`;
+  const fewShotInstruction = fewShotContext ? `\n${fewShotContext}\n` : '';
+
+  const fullPrompt = `System: Eres un asistente experto en analítica de base de datos classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.${fewShotInstruction}\nContexto de datos: ${systemContext}${perspectiveInstruction}\n\nPregunta Usuario: ${userPrompt}`;
 
   const iterNumber = iterationPerspective?.iterationNumber || 1;
   const iterTitle = iterationPerspective?.title || 'General';
@@ -139,13 +143,17 @@ async function tryQueryOllama(
   return null;
 }
 
-export async function processAiQuery(prompt: string, requestedIterations: number = 1): Promise<AiChatMessage> {
+export async function processAiQuery(
+  prompt: string,
+  requestedIterations: number = 1,
+  useFewShot: boolean = true
+): Promise<AiChatMessage> {
   const totalIterations = Math.max(1, Math.min(5, Math.floor(requestedIterations) || 1));
   aiLogger.startAttempt(prompt, totalIterations);
 
   try {
-    const result = await internalProcessAiQuery(prompt, totalIterations);
-    aiLogger.finishAttempt('completed', `Generada respuesta con ${result.iterations?.length || 1} iteraciones`);
+    const result = await internalProcessAiQuery(prompt, totalIterations, useFewShot);
+    aiLogger.finishAttempt('completed', `Generada respuesta con ${result.iterations?.length || 1} iteraciones ${useFewShot ? '(Few-Shot N*)' : '(Zero-Shot)'}`);
     return result;
   } catch (err: any) {
     aiLogger.finishAttempt('error', err?.message || 'Error en procesamiento');
@@ -153,10 +161,16 @@ export async function processAiQuery(prompt: string, requestedIterations: number
   }
 }
 
-async function internalProcessAiQuery(prompt: string, totalIterations: number): Promise<AiChatMessage> {
+async function internalProcessAiQuery(
+  prompt: string,
+  totalIterations: number,
+  useFewShot: boolean = true
+): Promise<AiChatMessage> {
   const query = prompt.toLowerCase().trim();
   const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const id = `msg_${Date.now()}`;
+  const fewShotPair = useFewShot ? getFewShotPairForQuery(prompt) : null;
+  const fewShotContext = fewShotPair ? formatFewShotPromptContext(fewShotPair) : '';
 
   // Security guardrail against destructive queries
   if (
@@ -343,11 +357,17 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
 
     for (let i = 0; i < totalIterations; i++) {
       const cfg = stockIterConfigs[i];
-      const ollamaText = await tryQueryOllama(prompt, systemContext, {
-        iterationNumber: cfg.iterationNumber,
-        title: cfg.title,
-        focus: cfg.focus,
-      });
+      const ollamaText = await tryQueryOllama(
+        prompt,
+        systemContext,
+        {
+          iterationNumber: cfg.iterationNumber,
+          title: cfg.title,
+          focus: cfg.focus,
+        },
+        undefined,
+        fewShotContext
+      );
 
       iterations.push({
         iterationNumber: cfg.iterationNumber,
@@ -371,6 +391,8 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
       source: iterations[0].source,
       iterationsCount: totalIterations,
       iterations,
+      fewShotApplied: Boolean(fewShotPair),
+      analogNeedId: fewShotPair?.analogId,
     };
   }
 
@@ -452,11 +474,17 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
 
     for (let i = 0; i < totalIterations; i++) {
       const cfg = salesIterConfigs[i];
-      const ollamaText = await tryQueryOllama(prompt, systemContext, {
-        iterationNumber: cfg.iterationNumber,
-        title: cfg.title,
-        focus: cfg.focus,
-      });
+      const ollamaText = await tryQueryOllama(
+        prompt,
+        systemContext,
+        {
+          iterationNumber: cfg.iterationNumber,
+          title: cfg.title,
+          focus: cfg.focus,
+        },
+        undefined,
+        fewShotContext
+      );
 
       iterations.push({
         iterationNumber: cfg.iterationNumber,
@@ -480,6 +508,8 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
       source: iterations[0].source,
       iterationsCount: totalIterations,
       iterations,
+      fewShotApplied: Boolean(fewShotPair),
+      analogNeedId: fewShotPair?.analogId,
     };
   }
 
@@ -567,11 +597,17 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
 
     for (let i = 0; i < totalIterations; i++) {
       const cfg = customerIterConfigs[i];
-      const ollamaText = await tryQueryOllama(prompt, systemContext, {
-        iterationNumber: cfg.iterationNumber,
-        title: cfg.title,
-        focus: cfg.focus,
-      });
+      const ollamaText = await tryQueryOllama(
+        prompt,
+        systemContext,
+        {
+          iterationNumber: cfg.iterationNumber,
+          title: cfg.title,
+          focus: cfg.focus,
+        },
+        undefined,
+        fewShotContext
+      );
 
       iterations.push({
         iterationNumber: cfg.iterationNumber,
@@ -595,6 +631,8 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
       source: iterations[0].source,
       iterationsCount: totalIterations,
       iterations,
+      fewShotApplied: Boolean(fewShotPair),
+      analogNeedId: fewShotPair?.analogId,
     };
   }
 
@@ -681,11 +719,17 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
 
     for (let i = 0; i < totalIterations; i++) {
       const cfg = orderIterConfigs[i];
-      const ollamaText = await tryQueryOllama(prompt, systemContext, {
-        iterationNumber: cfg.iterationNumber,
-        title: cfg.title,
-        focus: cfg.focus,
-      });
+      const ollamaText = await tryQueryOllama(
+        prompt,
+        systemContext,
+        {
+          iterationNumber: cfg.iterationNumber,
+          title: cfg.title,
+          focus: cfg.focus,
+        },
+        undefined,
+        fewShotContext
+      );
 
       iterations.push({
         iterationNumber: cfg.iterationNumber,
@@ -709,6 +753,8 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
       source: iterations[0].source,
       iterationsCount: totalIterations,
       iterations,
+      fewShotApplied: Boolean(fewShotPair),
+      analogNeedId: fewShotPair?.analogId,
     };
   }
 
@@ -788,11 +834,17 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
 
     for (let i = 0; i < totalIterations; i++) {
       const cfg = employeeIterConfigs[i];
-      const ollamaText = await tryQueryOllama(prompt, systemContext, {
-        iterationNumber: cfg.iterationNumber,
-        title: cfg.title,
-        focus: cfg.focus,
-      });
+      const ollamaText = await tryQueryOllama(
+        prompt,
+        systemContext,
+        {
+          iterationNumber: cfg.iterationNumber,
+          title: cfg.title,
+          focus: cfg.focus,
+        },
+        undefined,
+        fewShotContext
+      );
 
       iterations.push({
         iterationNumber: cfg.iterationNumber,
@@ -816,6 +868,8 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
       source: iterations[0].source,
       iterationsCount: totalIterations,
       iterations,
+      fewShotApplied: Boolean(fewShotPair),
+      analogNeedId: fewShotPair?.analogId,
     };
   }
 
@@ -890,11 +944,17 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
 
   for (let i = 0; i < totalIterations; i++) {
     const cfg = generalIterConfigs[i];
-    const ollamaText = await tryQueryOllama(prompt, systemContext, {
-      iterationNumber: cfg.iterationNumber,
-      title: cfg.title,
-      focus: cfg.focus,
-    });
+    const ollamaText = await tryQueryOllama(
+      prompt,
+      systemContext,
+      {
+        iterationNumber: cfg.iterationNumber,
+        title: cfg.title,
+        focus: cfg.focus,
+      },
+      undefined,
+      fewShotContext
+    );
 
     iterations.push({
       iterationNumber: cfg.iterationNumber,
@@ -918,5 +978,8 @@ async function internalProcessAiQuery(prompt: string, totalIterations: number): 
     source: iterations[0].source,
     iterationsCount: totalIterations,
     iterations,
+    fewShotApplied: Boolean(fewShotPair),
+    analogNeedId: fewShotPair?.analogId,
   };
 }
+

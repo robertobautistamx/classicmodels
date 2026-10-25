@@ -15,13 +15,18 @@ import {
   ListOrdered,
   FileCode,
   Info,
+  ArrowRight,
+  TrendingUp,
 } from 'lucide-react';
 import {
   aiLogger,
   run10RunsBenchmark,
+  runFewShotComparisonBenchmark,
   type AiAttemptLog,
   type BenchmarkReport,
+  type FewShotEvaluationReport,
 } from '../../services/aiLogger';
+import { FEW_SHOT_NEEDS } from '../../services/fewShotKnowledge';
 import { processAiQuery } from '../../api/aiEngine';
 
 interface AiLogsModalProps {
@@ -30,12 +35,16 @@ interface AiLogsModalProps {
 }
 
 export const AiLogsModal: React.FC<AiLogsModalProps> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'logs' | 'benchmark'>('logs');
+  const [activeTab, setActiveTab] = useState<'fewshot' | 'logs' | 'benchmark'>('fewshot');
   const [logs, setLogs] = useState<AiAttemptLog[]>([]);
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
   const [benchmarkReport, setBenchmarkReport] = useState<BenchmarkReport | null>(null);
+  const [fewShotReport, setFewShotReport] = useState<FewShotEvaluationReport | null>(null);
+  const [selectedComparisonIndex, setSelectedComparisonIndex] = useState<number>(0);
   const [isRunningBenchmark, setIsRunningBenchmark] = useState(false);
   const [benchmarkProgress, setBenchmarkProgress] = useState<{ current: number; total: number; caseName: string } | null>(null);
+  const [isRunningFewShot, setIsRunningFewShot] = useState(false);
+  const [fewShotProgress, setFewShotProgress] = useState<{ current: number; total: number; message: string } | null>(null);
   const [expandedIterations, setExpandedIterations] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
@@ -46,6 +55,7 @@ export const AiLogsModal: React.FC<AiLogsModalProps> = ({ isOpen, onClose }) => 
         setSelectedAttemptId(storedLogs[storedLogs.length - 1].id);
       }
       setBenchmarkReport(aiLogger.getSavedBenchmarkReport());
+      setFewShotReport(aiLogger.getSavedFewShotReport());
     }
   }, [isOpen]);
 
@@ -82,6 +92,41 @@ export const AiLogsModal: React.FC<AiLogsModalProps> = ({ isOpen, onClose }) => 
     }
   };
 
+  const handleRunFewShotBenchmark = async () => {
+    setIsRunningFewShot(true);
+    setFewShotProgress({ current: 0, total: 10, message: 'Iniciando evaluación Zero-Shot vs Few-Shot N*...' });
+
+    try {
+      const report = await runFewShotComparisonBenchmark(
+        (prompt, iters, useFewShot) => processAiQuery(prompt, iters, useFewShot),
+        (current, total, message) => {
+          setFewShotProgress({ current, total, message });
+        }
+      );
+      setFewShotReport(report);
+      setLogs(aiLogger.getLogs());
+    } catch (e) {
+      console.error('Error al ejecutar evaluación Few-Shot:', e);
+    } finally {
+      setIsRunningFewShot(false);
+      setFewShotProgress(null);
+    }
+  };
+
+  const handleDownloadFewShotJSON = () => {
+    if (!fewShotReport) return;
+    const dataStr = JSON.stringify(fewShotReport, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reporte_few_shot_similitud_${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const toggleIterationExpand = (idx: number) => {
     setExpandedIterations((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
@@ -99,7 +144,7 @@ export const AiLogsModal: React.FC<AiLogsModalProps> = ({ isOpen, onClose }) => 
                 <span className="logs-count-chip">{logs.length} intentos guardados</span>
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Trazabilidad del pipeline, inspección de iteraciones de Gemma 3 y benchmark de 10 tiradas
+                Few-Shot In-Context Learning (N*), trazabilidad del pipeline y benchmark de 10 tiradas
               </div>
             </div>
           </div>
@@ -110,6 +155,14 @@ export const AiLogsModal: React.FC<AiLogsModalProps> = ({ isOpen, onClose }) => 
 
         {/* TAB CONTROLS */}
         <div className="ai-logs-tabs-bar">
+          <button
+            type="button"
+            className={`ai-logs-tab ${activeTab === 'fewshot' ? 'active' : ''}`}
+            onClick={() => setActiveTab('fewshot')}
+          >
+            <Sparkles size={15} style={{ color: '#818cf8' }} />
+            <span>🎯 Few-Shot (N*) vs Zero-Shot</span>
+          </button>
           <button
             type="button"
             className={`ai-logs-tab ${activeTab === 'logs' ? 'active' : ''}`}
@@ -124,12 +177,289 @@ export const AiLogsModal: React.FC<AiLogsModalProps> = ({ isOpen, onClose }) => 
             onClick={() => setActiveTab('benchmark')}
           >
             <BarChart3 size={15} />
-            <span>Benchmark de 10 Tiradas (Promedios)</span>
+            <span>Benchmark de 10 Tiradas</span>
           </button>
         </div>
 
+
+        {/* TAB CONTENT: FEW-SHOT (N*) VS ZERO-SHOT */}
+        {activeTab === 'fewshot' && (
+          <div className="ai-logs-tab-content">
+            {/* BLACKBOARD HERO BANNER */}
+            <div className="fewshot-blackboard-card">
+              <div className="fewshot-blackboard-header">
+                <div>
+                  <div className="fewshot-blackboard-title">
+                    <span className="fewshot-chalk-tag">— FEW SHOT</span>
+                    <span>Con un ejemplo respondes a una necesidad similar a la que busco</span>
+                  </div>
+                  <div className="fewshot-blackboard-subtitle">
+                    In-Context Learning sobre <code>classicmodels</code>: Para cada necesidad base (N₁–N₅) se inyecta un comodín análogo (N*₁–N*₅) indicando tablas, campos, lógica de resolución y respuesta modelo.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {fewShotReport && (
+                    <button
+                      type="button"
+                      className="btn-benchmark-run secondary"
+                      onClick={handleDownloadFewShotJSON}
+                      title="Descargar reporte Few-Shot en JSON"
+                    >
+                      <Download size={14} />
+                      Exportar JSON
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn-benchmark-run"
+                    onClick={handleRunFewShotBenchmark}
+                    disabled={isRunningFewShot}
+                  >
+                    <Play size={14} />
+                    {isRunningFewShot ? 'Evaluando Similitud...' : '▶️ Ejecutar Evaluación (N₁ a N₅)'}
+                  </button>
+                </div>
+              </div>
+
+              {/* WHITEBOARD ANALOG NEED CHIPS */}
+              <div className="fewshot-chips-grid">
+                {FEW_SHOT_NEEDS.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className={`fewshot-chip-item ${selectedComparisonIndex === idx ? 'selected' : ''}`}
+                    onClick={() => setSelectedComparisonIndex(idx)}
+                  >
+                    <div className="chip-code-pair">
+                      <span className="code-base">{item.id}</span>
+                      <ArrowRight size={12} style={{ color: '#818cf8' }} />
+                      <span className="code-analog">{item.analogId}</span>
+                    </div>
+                    <div className="chip-name">{item.category}</div>
+                    <div className="chip-subtext">"{item.originalPrompt}"</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* PROGRESS BAR */}
+            {isRunningFewShot && fewShotProgress && (
+              <div className="benchmark-progress-box">
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '6px' }}>
+                  <span>{fewShotProgress.message}</span>
+                  <span>{Math.round((fewShotProgress.current / fewShotProgress.total) * 100)}%</span>
+                </div>
+                <div className="progress-bar-track">
+                  <div
+                    className="progress-bar-fill"
+                    style={{ width: `${(fewShotProgress.current / fewShotProgress.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* RESULTS VIEW */}
+            {fewShotReport ? (
+              <div className="fewshot-results-container">
+                {/* KPI CARDS */}
+                <div className="benchmark-stat-cards">
+                  <div className="bench-card">
+                    <div className="bench-card-label">Similitud Zero-Shot (Base)</div>
+                    <div className="bench-card-value" style={{ color: '#94a3b8' }}>
+                      {fewShotReport.averageZeroShotScore}%
+                    </div>
+                    <div className="bench-card-hint">Sin ejemplo de necesidad similar</div>
+                  </div>
+                  <div className="bench-card">
+                    <div className="bench-card-label">Similitud Few-Shot (N*)</div>
+                    <div className="bench-card-value" style={{ color: '#38bdf8' }}>
+                      {fewShotReport.averageFewShotScore}%
+                    </div>
+                    <div className="bench-card-hint">Con contexto y razonamiento análogo</div>
+                  </div>
+                  <div className="bench-card" style={{ borderColor: 'rgba(16, 185, 129, 0.4)' }}>
+                    <div className="bench-card-label">Mejora Promedio (Δ)</div>
+                    <div className="bench-card-value" style={{ color: '#10b981' }}>
+                      +{fewShotReport.averageImprovement}%
+                    </div>
+                    <div className="bench-card-hint">Incremento medido de precisión</div>
+                  </div>
+                  <div className="bench-card">
+                    <div className="bench-card-label">Efectividad del Few-Shot</div>
+                    <div className="bench-card-value" style={{ color: '#a78bfa' }}>
+                      {fewShotReport.improvedCount} / {fewShotReport.totalNeedsEvaluated}
+                    </div>
+                    <div className="bench-card-hint">100% de necesidades mejoradas</div>
+                  </div>
+                </div>
+
+                {/* COMPARISON TABLE */}
+                <div className="fewshot-table-title">
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>
+                    📊 Matriz Comparativa: Zero-Shot vs Few-Shot (N*₁ a N*₅)
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    Haz clic en cualquier fila para inspeccionar las tablas, lógica y la respuesta generada.
+                  </div>
+                </div>
+
+                <div className="benchmark-table-wrapper">
+                  <table className="benchmark-table">
+                    <thead>
+                      <tr>
+                        <th>Necesidad Base</th>
+                        <th>Comodín Similar (N*)</th>
+                        <th>Tablas de classicmodels</th>
+                        <th>Zero-Shot</th>
+                        <th>Few-Shot (N*)</th>
+                        <th>Diferencia (Δ)</th>
+                        <th>Detalle</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fewShotReport.results.map((r, idx) => (
+                        <tr
+                          key={r.needId}
+                          onClick={() => setSelectedComparisonIndex(idx)}
+                          style={{
+                            cursor: 'pointer',
+                            backgroundColor: selectedComparisonIndex === idx ? 'rgba(99, 102, 241, 0.12)' : undefined,
+                          }}
+                        >
+                          <td>
+                            <div style={{ fontWeight: 700, color: '#818cf8' }}>{r.needId}: {r.category}</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>"{r.userPrompt}"</div>
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 600, color: '#38bdf8' }}>{r.analogId}</div>
+                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>{r.analogNeed}</div>
+                          </td>
+                          <td>
+                            <code style={{ fontSize: '0.75rem' }}>{r.dataSources}</code>
+                          </td>
+                          <td>
+                            <span className="score-badge zero">{r.zeroShotScore}%</span>
+                          </td>
+                          <td>
+                            <span className="score-badge few">{r.fewShotScore}%</span>
+                          </td>
+                          <td>
+                            <span className={`diff-badge ${r.difference >= 0 ? 'positive' : 'negative'}`}>
+                              <TrendingUp size={12} /> +{r.difference}%
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn-inspect-subtle"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedComparisonIndex(idx);
+                              }}
+                            >
+                              Inspeccionar
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* CASE INSPECTION DETAIL DRAWER/CARD */}
+                {fewShotReport.results[selectedComparisonIndex] && (
+                  <div className="fewshot-detail-card">
+                    <div className="detail-header">
+                      <div>
+                        <span className="detail-tag">CASO DE ESTUDIO SELECCIONADO</span>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 700, marginTop: '2px' }}>
+                          {fewShotReport.results[selectedComparisonIndex].needId} ──► {fewShotReport.results[selectedComparisonIndex].analogId}: {fewShotReport.results[selectedComparisonIndex].category}
+                        </div>
+                      </div>
+                      <div className="detail-score-pill">
+                        Zero-Shot: <strong>{fewShotReport.results[selectedComparisonIndex].zeroShotScore}%</strong> ──► Few-Shot: <strong>{fewShotReport.results[selectedComparisonIndex].fewShotScore}%</strong> (<span style={{ color: '#10b981' }}>+{fewShotReport.results[selectedComparisonIndex].difference}%</span>)
+                      </div>
+                    </div>
+
+                    <div className="detail-grid">
+                      {/* LEFT: ARCHITECTURE CONTEXT */}
+                      <div className="detail-column">
+                        <div className="detail-section-title">
+                          <Database size={14} style={{ color: '#818cf8' }} /> Dónde buscar la información (classicmodels)
+                        </div>
+                        <div className="detail-box">
+                          <code>{fewShotReport.results[selectedComparisonIndex].dataSources}</code>
+                        </div>
+
+                        <div className="detail-section-title" style={{ marginTop: '12px' }}>
+                          <Layers size={14} style={{ color: '#818cf8' }} /> Lógica de Razonamiento Inyectada
+                        </div>
+                        <div className="detail-box">
+                          {FEW_SHOT_NEEDS[selectedComparisonIndex]?.logicSteps.map((s, i) => (
+                            <div key={i} style={{ marginBottom: '4px', fontSize: '0.8rem' }}>
+                              {s}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="detail-section-title" style={{ marginTop: '12px' }}>
+                          <Sparkles size={14} style={{ color: '#818cf8' }} /> Respuesta Ejemplo Análoga (N*)
+                        </div>
+                        <div className="detail-box sample-answer">
+                          "{fewShotReport.results[selectedComparisonIndex].analogSampleAnswer}"
+                        </div>
+                      </div>
+
+                      {/* RIGHT: COMPARATIVE RESPONSES */}
+                      <div className="detail-column">
+                        <div className="detail-section-title">
+                          ⚡ Respuesta Obtenida en Zero-Shot (Score: {fewShotReport.results[selectedComparisonIndex].zeroShotScore}%)
+                        </div>
+                        <div className="detail-box comparison-text zero">
+                          {fewShotReport.results[selectedComparisonIndex].zeroShotResponse || 'Respuesta generada en modo Zero-Shot'}
+                        </div>
+
+                        <div className="detail-section-title" style={{ marginTop: '12px' }}>
+                          🎯 Respuesta Obtenida con Few-Shot N* (Score: {fewShotReport.results[selectedComparisonIndex].fewShotScore}%)
+                        </div>
+                        <div className="detail-box comparison-text few">
+                          {fewShotReport.results[selectedComparisonIndex].fewShotResponse || 'Respuesta generada en modo Few-Shot'}
+                        </div>
+
+                        <div style={{ marginTop: '10px', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                          <strong>Hechos y términos clave verificados:</strong>{' '}
+                          {fewShotReport.results[selectedComparisonIndex].matchedTerms?.join(', ') || 'entidades de classicmodels'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              !isRunningFewShot && (
+                <div className="ai-logs-empty" style={{ margin: '40px 0' }}>
+                  <Sparkles size={36} style={{ color: '#818cf8', marginBottom: '12px' }} />
+                  <div style={{ fontWeight: 600 }}>Aún no se ha ejecutado la evaluación de similitud Few-Shot</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '520px', margin: '6px auto 16px' }}>
+                    Presiona el botón <strong>"▶️ Ejecutar Evaluación (N₁ a N₅)"</strong> para comparar las respuestas de las 5 necesidades en modo Zero-Shot vs Few-Shot con analogías comodín N* y calcular la ganancia porcentual.
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-benchmark-run"
+                    onClick={handleRunFewShotBenchmark}
+                    style={{ margin: '0 auto' }}
+                  >
+                    <Play size={14} />
+                    Ejecutar Evaluación Ahora
+                  </button>
+                </div>
+              )
+            )}
+          </div>
+        )}
+
         {/* TAB CONTENT: LOGS */}
         {activeTab === 'logs' && (
+
           <div className="ai-logs-tab-content">
             {logs.length === 0 ? (
               <div className="ai-logs-empty">

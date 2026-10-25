@@ -35,6 +35,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [iterationsCount, setIterationsCount] = useState<number>(1);
+  const [useFewShot, setUseFewShot] = useState<boolean>(true);
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
@@ -74,7 +75,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
     setLoading(true);
 
     try {
-      const response = await processAiQuery(textToSend, currentIterationsSetting);
+      const response = await processAiQuery(textToSend, currentIterationsSetting, useFewShot);
       setMessages((prev) => [...prev, response]);
       if (response.iterations && response.iterations.length > 0) {
         setActiveTabs((prev) => ({ ...prev, [response.id]: 0 }));
@@ -114,6 +115,14 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              className={`btn-few-shot-toggle ${useFewShot ? 'active' : ''}`}
+              onClick={() => setUseFewShot(!useFewShot)}
+              title={useFewShot ? 'In-Context Learning Activo: inyecta necesidad similar N* en el prompt' : 'Modo Zero-Shot estándar (sin ejemplo previo)'}
+            >
+              {useFewShot ? '🎯 Few-Shot N*' : '⚡ Zero-Shot'}
+            </button>
             <button
               type="button"
               className="btn-logs-trigger"
@@ -190,9 +199,9 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
                   {/* Main Response Text */}
                   <div className="chat-bubble-content">{textToDisplay}</div>
 
-                  {/* Model source badge */}
-                  {msg.sender === 'assistant' && sourceToDisplay && (
-                    <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.70rem' }}>
+                  {/* Model source badge & Few-shot indicator */}
+                  {msg.sender === 'assistant' && (
+                    <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.70rem', flexWrap: 'wrap' }}>
                       {sourceToDisplay === 'ollama' ? (
                         <span style={{ color: '#a5b4fc', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(99, 102, 241, 0.15)', padding: '2px 8px', borderRadius: '12px', fontWeight: 500 }}>
                           <Sparkles size={10} /> Modelo: Gemma 3 (Ollama Local)
@@ -202,6 +211,11 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
                           ⚡ Motor BD Nova
                         </span>
                       )}
+                      {msg.fewShotApplied && msg.analogNeedId && (
+                        <span style={{ color: '#34d399', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16, 185, 129, 0.15)', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                          🎯 Few-Shot ({msg.analogNeedId} similar)
+                        </span>
+                      )}
                       {hasIterations && (
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.68rem', opacity: 0.85 }}>
                           • Iteración {activeIdx + 1}/{msg.iterations?.length}
@@ -209,6 +223,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
                       )}
                     </div>
                   )}
+
 
                   {/* Data Table Rendering */}
                   {dataTypeToDisplay === 'table' && dataToDisplay && dataToDisplay.length > 0 && (
