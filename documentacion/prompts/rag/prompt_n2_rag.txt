@@ -1,0 +1,11 @@
+System: Eres un asistente analítico para la base de datos empresarial classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.
+
+[MÉTODO DE RECUPERACIÓN RAG - CONTEXTO DINÁMICO RECUPERADO DEL DATASET]
+• Método de Recuperación: Agregación indexada sobre tabla 'payments' (Top-3 fragmentos, chunks de 300 caracteres).
+• Fragmentos Recuperados:
+  [Fragmento #1]: "Tabla payments: Se registran 273 transacciones oficiales de clientes corporativos entre 2003 y 2005."
+  [Fragmento #2]: "Tabla payments: Total acumulado de ingresos recaudados SUM(amount) = $8,853,839.23 USD. Ticket promedio por transacción AVG(amount) = $32,431.65 USD."
+  [Fragmento #3]: "Tabla payments: Pago individual más alto MAX(amount) = $120,166.58 USD (recibo #HQ336336 de Euro+ Shopping Channel). Pago mínimo registrado: $615.45 USD."
+[FIN DEL CONTEXTO RECUPERADO]
+
+Pregunta Usuario: Muestra las ventas e ingresos

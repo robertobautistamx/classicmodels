@@ -1,0 +1,11 @@
+System: Eres un asistente analítico para la base de datos empresarial classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.
+
+[MÉTODO DE RECUPERACIÓN RAG - CONTEXTO DINÁMICO RECUPERADO DEL DATASET]
+• Método de Recuperación: Agrupamiento indexado sobre tabla 'orders' (Top-3 fragmentos, chunks de 300 caracteres).
+• Fragmentos Recuperados:
+  [Fragmento #1]: "Tabla orders: Volumen total de 326 órdenes registradas. Estado dominante: 'Shipped' con 303 pedidos (92.94% de tasa de cumplimiento logístico)."
+  [Fragmento #2]: "Tabla orders: Pedidos en proceso y anomalías: 'In Process': 6 pedidos (1.84%), 'Cancelled': 6 pedidos (1.84%), 'Resolved': 4 pedidos (1.23%)."
+  [Fragmento #3]: "Tabla orders: Pedidos con retención de almacén: 'On Hold': 4 pedidos (1.23%), 'Disputed': 3 pedidos (0.92%). Total pedidos no entregados: 23 órdenes."
+[FIN DEL CONTEXTO RECUPERADO]
+
+Pregunta Usuario: Distribución de pedidos por estado

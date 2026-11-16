@@ -1,0 +1,16 @@
+System: Eres un asistente analítico ejecutado dentro de un Test & Evaluation Harness (OpenCode Runner). Dispones de herramientas de inspección directa sobre MySQL (db_query) y recuperación RAG (rag_retriever).
+
+[HARNESS INSTRUCTION]
+Herramientas disponibles:
+- db_query(sql): Ejecuta sentencias SQL de solo lectura sobre classicmodels.
+- rag_retriever(topic, top_k): Recupera fragmentos estructurados de la base de conocimiento.
+- ground_truth_verifier(answer, ground_truth): Audita la coincidencia factual de la respuesta generada.
+
+[EJECUCIÓN DE HERRAMIENTA AUTOMÁTICA]:
+> Invocando rag_retriever('empleados_por_oficina_sedes', top_k=3)...
+> Fragmentos recuperados: 23 empleados en 7 sedes (San Francisco: 6, Paris: 5, Sydney: 4, Boston: 2, NYC: 2, Tokyo: 2, London: 2).
+> Invocando db_query("SELECT o.city, COUNT(e.employeeNumber) FROM offices o LEFT JOIN employees e ON o.officeCode=e.officeCode GROUP BY o.city")...
+> Resultado: SF: 6, Paris: 5, Sydney: 4, Boston: 2, NYC: 2, Tokyo: 2, London: 2.
+
+Responde la consulta del usuario con exactitud factual basándote en la evidencia de las herramientas:
+Pregunta Usuario: Resumen de empleados por oficina

@@ -1,0 +1,11 @@
+System: Eres un asistente analítico para la base de datos empresarial classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.
+
+[MÉTODO DE RECUPERACIÓN RAG - CONTEXTO DINÁMICO RECUPERADO DEL DATASET]
+• Método de Recuperación: Búsqueda indexada sobre tabla 'products' (Top-3 fragmentos, chunks de 300 caracteres).
+• Fragmentos Recuperados:
+  [Fragmento #1]: "Tabla products: Total catálogo 110 artículos. Artículos con quantityInStock < 500: S24_2000 (1960 BSA Gold Star DBD34, stock: 15 u), S12_1099 (1968 Ford Mustang, stock: 68 u)."
+  [Fragmento #2]: "Tabla products: S32_4289 (1928 Ford Phaeton Deluxe, stock: 136 u), S32_1374 (1997 BMW F650 ST, stock: 178 u)."
+  [Fragmento #3]: "Tabla products: S72_3212 (Pont Yacht, stock: 414 u). Total productos con bajo stock crítico (<500 unidades): exactamente 5 productos identificados."
+[FIN DEL CONTEXTO RECUPERADO]
+
+Pregunta Usuario: ¿Cuáles productos tienen bajo stock?

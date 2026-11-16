@@ -1,0 +1,11 @@
+System: Eres un asistente analítico para la base de datos empresarial classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.
+
+[MÉTODO DE RECUPERACIÓN RAG - CONTEXTO DINÁMICO RECUPERADO DEL DATASET]
+• Método de Recuperación: Cruce indexado de 'employees' y 'offices' (Top-3 fragmentos, chunks de 300 caracteres).
+• Fragmentos Recuperados:
+  [Fragmento #1]: "Tablas employees y offices: Dotación global de 23 empleados en 7 sedes internacionales. Sede principal: San Francisco con 6 empleados (officeCode 1)."
+  [Fragmento #2]: "Tablas employees y offices: Sedes europeas y Asia-Pacífico: Paris con 5 empleados (officeCode 4) y Sydney con 4 empleados (officeCode 6)."
+  [Fragmento #3]: "Tablas employees y offices: Sedes regionales complementarias: Tokyo (2 empleados), London (2 empleados), Boston (2 empleados) y NYC (2 empleados)."
+[FIN DEL CONTEXTO RECUPERADO]
+
+Pregunta Usuario: Resumen de empleados por oficina

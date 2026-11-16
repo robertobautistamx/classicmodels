@@ -1,0 +1,40 @@
+{
+  "modelo_local": {
+    "servidor_inferencia": "Ollama Local Runtime",
+    "endpoint": "http://localhost:11434/api/generate",
+    "nombre_modelo": "gemma3:1b",
+    "etiqueta": "latest",
+    "desarrollador": "Google DeepMind",
+    "parametros": "~1.0B (Arquitectura Transformer ligera optimizada)",
+    "cuantizacion": "Q4_K_M (4-bit Medium Quantization)",
+    "temperatura": 0.35,
+    "temperatura_rango": "0.30 - 0.70",
+    "tamano_contexto": 4096,
+    "limite_salida_tokens": 140,
+    "top_k": 40,
+    "top_p": 0.9,
+    "repeat_penalty": 1.1
+  },
+  "etapas_evaluadas": [
+    {
+      "id": "inicial",
+      "nombre": "Etapa Inicial (Zero-Shot Baseline)",
+      "descripcion": "Prompt base con la pregunta directa y esquema sintético sin ejemplos resueltos."
+    },
+    {
+      "id": "few_shot",
+      "nombre": "Etapa Few-Shot (In-Context Learning con N*)",
+      "descripcion": "Prompt base complementado con ejemplos análogos resueltos distintos de la pregunta evaluada para evitar sobreajuste."
+    },
+    {
+      "id": "rag",
+      "nombre": "Etapa RAG (Retrieval-Augmented Generation)",
+      "descripcion": "Recuperación dinámica de fragmentos relevantes (chunks de catálogo y agregaciones de base de datos) inyectados como contexto previo."
+    },
+    {
+      "id": "harness",
+      "nombre": "Etapa Harness (Agente / Tool-Calling con Traza)",
+      "descripcion": "Ejecución dentro de un arnés de prueba con herramientas de verificación SQL y registro auditable de traza paso a paso."
+    }
+  ]
+}
