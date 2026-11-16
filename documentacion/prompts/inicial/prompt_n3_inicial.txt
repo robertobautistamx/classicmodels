@@ -1,0 +1,5 @@
+System: Eres un asistente analítico para la base de datos empresarial classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.
+
+Contexto del dataset: Base de datos classicmodels. Tabla 'customers' con cartera de 122 clientes comerciales internacionales y límites de crédito autorizados.
+
+Pregunta Usuario: Top clientes por límite de crédito

@@ -1,0 +1,13 @@
+System: Eres un asistente analítico para la base de datos empresarial classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.
+
+[IN-CONTEXT LEARNING - EJEMPLO ANALÍTICO DE REFERENCIA CON NECESIDAD SIMILAR (N*5)]
+• Necesidad Similar: Identificar la cadena de mando directiva y ejecutivos de mayor rango.
+• Dónde buscar: Tablas 'employees' y 'offices' (employeeNumber, jobTitle, reportsTo, officeCode, city).
+• Lógica aplicada: Identificar el nodo raíz donde reportsTo IS NULL (Presidente), vincular vicepresidentes y ubicar sede física.
+• Respuesta Modelo: "Para auditar la estructura directiva, se consultó la tabla 'employees' cruzada con 'offices'. Diane Murphy encabeza la organización como Presidente en San Francisco. Le reportan directamente Mary Patterson (VP Sales) y Jeff Firrelli (VP Marketing), quienes coordinan a los gerentes de ventas de las oficinas en París, Tokio, Sídney y Londres."
+[FIN DEL EJEMPLO DE REFERENCIA]
+
+INSTRUCCIÓN: Aplica exactamente este mismo método analítico para responder la necesidad real del usuario:
+Contexto del dataset: Base de datos classicmodels. Tablas 'employees' y 'offices' con personal corporativo y sedes internacionales.
+
+Pregunta Usuario: Resumen de empleados por oficina

@@ -1,0 +1,5 @@
+System: Eres un asistente analítico para la base de datos empresarial classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.
+
+Contexto del dataset: Base de datos classicmodels. Tabla 'products' con catálogo de 110 modelos a escala y niveles de inventario.
+
+Pregunta Usuario: ¿Cuáles productos tienen bajo stock?

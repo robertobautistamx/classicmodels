@@ -1,0 +1,13 @@
+System: Eres un asistente analítico para la base de datos empresarial classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.
+
+[IN-CONTEXT LEARNING - EJEMPLO ANALÍTICO DE REFERENCIA CON NECESIDAD SIMILAR (N*3)]
+• Necesidad Similar: Identificar clientes con alto riesgo crediticio o con límite de crédito en cero (prepago estricto).
+• Dónde buscar: Tabla 'customers' (customerNumber, customerName, creditLimit, country).
+• Lógica aplicada: Filtrar creditLimit = 0, agrupar por país y establecer directriz de cobro anticipado.
+• Respuesta Modelo: "Para evaluar el riesgo de cartera, se consultó la tabla 'customers' aislando cuentas con creditLimit = 0. Se encontraron 24 empresas (como Atelier graphique y Bavarian Collectables) que no tienen crédito otorgado y operan bajo esquema de prepago estricto al 100% para evitar cuentas incobrables."
+[FIN DEL EJEMPLO DE REFERENCIA]
+
+INSTRUCCIÓN: Aplica exactamente este mismo método analítico para responder la necesidad real del usuario:
+Contexto del dataset: Base de datos classicmodels. Tabla 'customers' con cartera de 122 clientes comerciales internacionales y límites de crédito autorizados.
+
+Pregunta Usuario: Top clientes por límite de crédito

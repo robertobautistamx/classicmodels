@@ -1,0 +1,11 @@
+System: Eres un asistente analítico para la base de datos empresarial classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.
+
+[MÉTODO DE RECUPERACIÓN RAG - CONTEXTO DINÁMICO RECUPERADO DEL DATASET]
+• Método de Recuperación: Recuperación de ranking sobre tabla 'customers' (Top-3 fragmentos, chunks de 300 caracteres).
+• Fragmentos Recuperados:
+  [Fragmento #1]: "Tabla customers: Cartera total de 122 cuentas. Top 1 cliente VIP: Euro+ Shopping Channel (customerNumber 141, España) con creditLimit = $227,600.00 USD."
+  [Fragmento #2]: "Tabla customers: Top 2: Mini Gifts Distributors Ltd. (customerNumber 124, USA) con creditLimit = $210,500.00 USD. Top 3: Vida Sport, Ltd (customerNumber 298, Suiza) con creditLimit = $141,300.00 USD."
+  [Fragmento #3]: "Tabla customers: Cartera global con $7,945,800.00 USD en líneas de crédito autorizadas; 24 empresas mantienen asignación de crédito cero ($0.00 USD)."
+[FIN DEL CONTEXTO RECUPERADO]
+
+Pregunta Usuario: Top clientes por límite de crédito

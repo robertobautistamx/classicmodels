@@ -1,0 +1,35 @@
+{
+  "computadora": {
+    "sistema_operativo": "Microsoft Windows 11 Pro 64 bits (Compilación 26300)",
+    "procesador": "AMD Ryzen 7 5700G with Radeon Graphics (8 núcleos físicos, 16 hilos lógicos)",
+    "memoria_ram": "32.0 GB (32,421,948 KB)",
+    "gpu": "AMD Radeon(TM) Graphics Integrada",
+    "node_version": "v22.20.0",
+    "python_version": "3.13.1"
+  },
+  "alumno": {
+    "nombre": "Roberto Bautista",
+    "matricula": "2223330204",
+    "grupo": "K",
+    "institucion": "Universidad Autónoma de Tamaulipas (UAT)"
+  },
+  "dataset": {
+    "nombre": "classicmodels",
+    "gestor": "MySQL Server 8.0+",
+    "puerto": 3306,
+    "host": "localhost",
+    "url_dataset": "https://www.mysqltutorial.org/getting-started-with-mysql/mysql-sample-database/",
+    "empresa_representada": "Classic Models Inc. (Minorista mayorista de réplicas y modelos a escala de autos clásicos, motocicletas, barcos, aviones y trenes)",
+    "tablas_totales": 8,
+    "registros_totales": {
+      "customers": 122,
+      "employees": 23,
+      "offices": 7,
+      "orderdetails": 2996,
+      "orders": 326,
+      "payments": 273,
+      "productlines": 7,
+      "products": 110
+    }
+  }
+}
