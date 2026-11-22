@@ -7,7 +7,63 @@ import { getEmployees, getOffices } from './employees';
 import { aiLogger } from '../services/aiLogger';
 import { getFewShotPairForQuery, formatFewShotPromptContext } from '../services/fewShotKnowledge';
 
-const OLLAMA_MODEL = 'gemma3:1b';
+// Modelos disponibles en Ollama local
+export type OllamaModelId = 'gemma3:1b' | 'qwen2.5-coder:3b' | 'auto';
+
+export interface OllamaModelInfo {
+  id: OllamaModelId;
+  label: string;
+  description: string;
+  emoji: string;
+  useCase: string;
+}
+
+export const AVAILABLE_MODELS: OllamaModelInfo[] = [
+  {
+    id: 'auto',
+    label: 'Auto',
+    description: 'Selección automática según el tipo de consulta',
+    emoji: '🤖',
+    useCase: 'Detecta si la pregunta es técnica (SQL/código) o analítica general',
+  },
+  {
+    id: 'gemma3:1b',
+    label: 'Gemma 3 1B',
+    description: 'Consultas generales de negocio y análisis de datos',
+    emoji: '💡',
+    useCase: 'Ventas, clientes, inventario, resúmenes ejecutivos',
+  },
+  {
+    id: 'qwen2.5-coder:3b',
+    label: 'Qwen2.5-Coder 3B',
+    description: 'Consultas técnicas, SQL y análisis de código',
+    emoji: '⚙️',
+    useCase: 'Generación de SQL, análisis técnico, consultas de programación',
+  },
+];
+
+// Palabras clave que indican consulta técnica → Qwen2.5-Coder
+const SQL_CODE_KEYWORDS = [
+  'sql', 'query', 'código', 'code', 'script', 'función', 'function',
+  'programar', 'select', 'join', 'where', 'group by', 'order by',
+  'tabla', 'columna', 'índice', 'foreign key', 'clave', 'stored procedure',
+  'trigger', 'view', 'vista', 'optimizar', 'explain', 'index',
+  'insert', 'schema', 'base de datos técnica', 'sintaxis',
+];
+
+function resolveModel(modelSetting: OllamaModelId, prompt: string): string {
+  if (modelSetting === 'auto') {
+    const q = prompt.toLowerCase();
+    const isTechnical = SQL_CODE_KEYWORDS.some(kw => q.includes(kw));
+    return isTechnical ? 'qwen2.5-coder:3b' : 'gemma3:1b';
+  }
+  return modelSetting;
+}
+
+// Modelo activo (mutable desde la UI mediante setActiveModel)
+let _activeModel: OllamaModelId = 'auto';
+export function getActiveModel(): OllamaModelId { return _activeModel; }
+export function setActiveModel(model: OllamaModelId): void { _activeModel = model; }
 
 async function tryQueryOllama(
   userPrompt: string,
@@ -18,13 +74,21 @@ async function tryQueryOllama(
 ): Promise<string | null> {
   const endpoints = ['http://localhost:11434/api/generate', '/ollama/api/generate'];
 
+  // Resolver el modelo según la configuración activa y el contenido del prompt
+  const resolvedModel = resolveModel(_activeModel, userPrompt);
+
   const perspectiveInstruction = iterationPerspective
     ? `\nEnfoque específico para esta Iteración #${iterationPerspective.iterationNumber} (${iterationPerspective.title}): ${iterationPerspective.focus}`
     : '';
 
   const fewShotInstruction = fewShotContext ? `\n${fewShotContext}\n` : '';
 
-  const fullPrompt = `System: Eres un asistente experto en analítica de base de datos classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.${fewShotInstruction}\nContexto de datos: ${systemContext}${perspectiveInstruction}\n\nPregunta Usuario: ${userPrompt}`;
+  // Ajustar el system prompt según el modelo
+  const systemRole = resolvedModel === 'qwen2.5-coder:3b'
+    ? 'Eres un experto en SQL y análisis de bases de datos. Cuando generes SQL usa el dialecto MySQL. Responde en español de forma técnica y concisa.'
+    : 'Eres un asistente experto en analítica de base de datos classicmodels. Responde de forma clara, directa y estructurada en español sin markdown complejo.';
+
+  const fullPrompt = `System: ${systemRole}${fewShotInstruction}\nContexto de datos: ${systemContext}${perspectiveInstruction}\n\nPregunta Usuario: ${userPrompt}`;
 
   const iterNumber = iterationPerspective?.iterationNumber || 1;
   const iterTitle = iterationPerspective?.title || 'General';
@@ -35,7 +99,8 @@ async function tryQueryOllama(
     `Inferencia Iteración #${iterNumber}: ${iterTitle}`,
     'info',
     {
-      modelo: OLLAMA_MODEL,
+      modelo: resolvedModel,
+      modoSeleccion: _activeModel === 'auto' ? `auto → ${resolvedModel}` : 'manual',
       enfoque: iterFocus,
       temperatura: iterationPerspective ? 0.3 + iterationPerspective.iterationNumber * 0.12 : 0.4,
       contextoLongitud: systemContext.length,
@@ -53,11 +118,11 @@ async function tryQueryOllama(
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
         body: JSON.stringify({
-          model: OLLAMA_MODEL,
+          model: resolvedModel,
           prompt: fullPrompt,
           stream: false,
           options: {
-            num_predict: 140,
+            num_predict: resolvedModel === 'qwen2.5-coder:3b' ? 220 : 140,
             temperature: iterationPerspective ? 0.3 + iterationPerspective.iterationNumber * 0.12 : 0.4,
           },
         }),
@@ -86,7 +151,7 @@ async function tryQueryOllama(
             promptSent: fullPrompt,
             responsePreview: data.response.trim(),
             telemetry: {
-              model: OLLAMA_MODEL,
+              model: resolvedModel,
               latencyMs,
               endpointUsed: url,
               totalDurationMs,
@@ -146,8 +211,12 @@ async function tryQueryOllama(
 export async function processAiQuery(
   prompt: string,
   requestedIterations: number = 1,
-  useFewShot: boolean = true
+  useFewShot: boolean = true,
+  selectedModel?: OllamaModelId
 ): Promise<AiChatMessage> {
+  if (selectedModel) {
+    _activeModel = selectedModel;
+  }
   const totalIterations = Math.max(1, Math.min(5, Math.floor(requestedIterations) || 1));
   aiLogger.startAttempt(prompt, totalIterations);
 

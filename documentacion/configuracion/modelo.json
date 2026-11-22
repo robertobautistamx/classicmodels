@@ -1,20 +1,44 @@
 {
-  "modelo_local": {
-    "servidor_inferencia": "Ollama Local Runtime",
-    "endpoint": "http://localhost:11434/api/generate",
-    "nombre_modelo": "gemma3:1b",
-    "etiqueta": "latest",
-    "desarrollador": "Google DeepMind",
-    "parametros": "~1.0B (Arquitectura Transformer ligera optimizada)",
-    "cuantizacion": "Q4_K_M (4-bit Medium Quantization)",
-    "temperatura": 0.35,
-    "temperatura_rango": "0.30 - 0.70",
-    "tamano_contexto": 4096,
-    "limite_salida_tokens": 140,
-    "top_k": 40,
-    "top_p": 0.9,
-    "repeat_penalty": 1.1
+  "servidor_inferencia": "Ollama Local Runtime v0.40.16",
+  "endpoint": "http://localhost:11434/api/generate",
+  "arquitectura_modelos": {
+    "estrategia": "Dual-Model Architecture con Selector UI y Enrutamiento Inteligente Auto",
+    "hardware_optimizado": "AMD Ryzen 7 5700G (8C/16T), 32 GB RAM DDR4"
   },
+  "modelos_locales": [
+    {
+      "id": "gemma3:1b",
+      "alias": [
+        "gemma:1b",
+        "gemma3:1b"
+      ],
+      "nombre_modelo": "Gemma 3 1B",
+      "etiqueta": "latest",
+      "desarrollador": "Google DeepMind",
+      "parametros": "1.0B (Gemma family)",
+      "tamano_disco": "1.6 GB",
+      "cuantizacion": "Q4_0",
+      "temperatura": 0.35,
+      "temperatura_rango": "0.30 - 0.70",
+      "tamano_contexto": 4096,
+      "limite_salida_tokens": 140,
+      "especialidad": "Consultas de negocio generales, interacción conversacional, análisis descriptivo y resúmenes ejecutivos."
+    },
+    {
+      "id": "qwen2.5-coder:3b",
+      "nombre_modelo": "Qwen2.5-Coder 3B",
+      "etiqueta": "latest",
+      "desarrollador": "Alibaba Cloud / Qwen Team",
+      "parametros": "3.1B",
+      "tamano_disco": "1.9 GB",
+      "cuantizacion": "Q4_K_M",
+      "temperatura": 0.30,
+      "temperatura_rango": "0.20 - 0.60",
+      "tamano_contexto": 32768,
+      "limite_salida_tokens": 220,
+      "especialidad": "Generación técnica de consultas SQL (dialecto MySQL), joins complejos, auditoría de esquemas e inspección de código."
+    }
+  ],
   "etapas_evaluadas": [
     {
       "id": "inicial",
