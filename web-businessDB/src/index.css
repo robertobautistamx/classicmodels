@@ -2262,4 +2262,64 @@ body {
   border-left: 3px solid #34d399;
   background: rgba(16, 185, 129, 0.05);
   color: #d1fae5;
-}
+}
+
+/* ==========================================================================
+   MODEL SELECTOR BAR (OLLAMA DUAL-MODEL: GEMMA 1B / QWEN2.5-CODER 3B)
+   ========================================================================== */
+.model-selector-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  gap: 12px;
+}
+
+.model-selector-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.model-selector-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.btn-model-pill {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.btn-model-pill:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(148, 163, 184, 0.4);
+  color: #f1f5f9;
+}
+
+.btn-model-pill.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
+  border-color: rgba(129, 140, 248, 0.6);
+  color: #c7d2fe;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.25);
+}

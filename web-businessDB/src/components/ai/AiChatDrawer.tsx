@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, ShieldCheck, Sparkles, MessageSquare, Download, Layers, Plus, Minus } from 'lucide-react';
+import { Bot, X, Send, ShieldCheck, Sparkles, MessageSquare, Download, Layers, Plus, Minus, Cpu } from 'lucide-react';
 import type { AiChatMessage } from '../../types';
-import { processAiQuery } from '../../api/aiEngine';
+import { processAiQuery, AVAILABLE_MODELS, type OllamaModelId } from '../../api/aiEngine';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { AiLogsModal } from './AiLogsModal';
 
@@ -36,16 +36,16 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
   const [loading, setLoading] = useState(false);
   const [iterationsCount, setIterationsCount] = useState<number>(1);
   const [useFewShot, setUseFewShot] = useState<boolean>(true);
+  const [selectedModel, setSelectedModel] = useState<OllamaModelId>('auto');
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
   const suggestions = [
     '¿Cuáles productos tienen bajo stock?',
-    'Muestra las ventas e ingresos',
     'Top clientes por límite de crédito',
-    'Distribución de pedidos por estado',
-    'Resumen de empleados por oficina',
+    'Escribe una consulta SQL para pedidos pendientes',
+    'Genera un query para calcular total de ventas por cliente',
   ];
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
     setLoading(true);
 
     try {
-      const response = await processAiQuery(textToSend, currentIterationsSetting, useFewShot);
+      const response = await processAiQuery(textToSend, currentIterationsSetting, useFewShot, selectedModel);
       setMessages((prev) => [...prev, response]);
       if (response.iterations && response.iterations.length > 0) {
         setActiveTabs((prev) => ({ ...prev, [response.id]: 0 }));
@@ -134,6 +134,28 @@ export const AiChatDrawer: React.FC<AiChatDrawerProps> = ({ isOpen, onClose }) =
             <button className="btn-close" onClick={onClose} title="Cerrar chat">
               <X size={18} />
             </button>
+          </div>
+        </div>
+
+        {/* SELECTOR DE MODELO OLLAMA */}
+        <div className="model-selector-bar">
+          <div className="model-selector-title">
+            <Cpu size={13} style={{ color: '#818cf8' }} />
+            <span>Modelo IA:</span>
+          </div>
+          <div className="model-selector-pills">
+            {AVAILABLE_MODELS.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className={`btn-model-pill ${selectedModel === m.id ? 'active' : ''}`}
+                onClick={() => setSelectedModel(m.id)}
+                title={`${m.label}: ${m.description} (${m.useCase})`}
+              >
+                <span>{m.emoji}</span>
+                <span>{m.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 

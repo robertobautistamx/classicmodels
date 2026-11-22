@@ -83,17 +83,3 @@ $$\text{Score \%} = (\text{Hechos Clave Recuperados} \times 0.55) + (\text{Jacca
 | **PROMEDIO** | **Consolidado de las 5 Necesidades** | **69.8%** | **89.8%** | **+20.0%** | 🟢 **100% Casos con Incremento** |
 
 ---
-
-## 5. Cómo Mostrarlo en Vivo al Maestro en la Aplicación Web
-
-1. Abre el sistema en el navegador (`http://localhost:5173`).
-2. Haz clic en el botón flotante del asistente **Nova Bot 🤖** (esquina inferior derecha).
-3. En la barra superior del chat verás el nuevo botón interactivo:
-   * **`🎯 Few-Shot N*`** (Activo): Inyecta el ejemplo similar $N^*$ en el prompt.
-   * Al hacer clic cambia a **`⚡ Zero-Shot`**: Envía la pregunta sin ejemplo previo.
-4. Haz clic en el botón **`🫙 Logs & Benchmark`**.
-5. Abre la pestaña **`🎯 Few-Shot (N*) vs Zero-Shot`**:
-   * Observarás el **Pizarrón del Maestro** digitalizado con los chips interactivos $N_1 \rightarrow N^*_1$ a $N_5 \rightarrow N^*_5$.
-   * Presiona el botón **`▶️ Ejecutar Evaluación (N₁ a N₅)`**: Correrá la prueba en vivo comparando las respuestas de las 5 necesidades en ambos modos y generará la tabla con los porcentajes de similitud y la ganancia (+%).
-   * Puedes hacer clic en **`Exportar JSON`** para descargar el reporte oficial.
-   * Puedes seleccionar cualquier fila para inspeccionar lado a lado la respuesta Zero-Shot vs Few-Shot y los datos de `classicmodels` utilizados.
